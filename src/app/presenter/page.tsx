@@ -10,8 +10,7 @@ import Link from "next/link";
 import { useWebSocket } from "@/hooks/use-websocket";
 
 const pollId = "quiz123"; // Dummy poll ID
-const TOPIC_ANSWER = `/topic/admin/${pollId}`;
-const TOPIC_QUESTION_BROADCAST = `/topic/quiz/question/${pollId}`;
+const TOPIC_ADMIN = `/topic/admin/${pollId}`;
 const APP_SEND_QUESTION = `/app/quiz/question/${pollId}`;
 
 export default function PresenterPage() {
@@ -31,67 +30,63 @@ export default function PresenterPage() {
   useEffect(() => {
     if (!isConnected) return;
 
-    const answerSub = subscribe(TOPIC_ANSWER, (message) => {
-      if (message.body) {
-        try {
-          const leaderboardData: { scoreboard: { user_name: string; score: number }[] } = JSON.parse(message.body);
-          
-          if (leaderboardData.scoreboard) {
-            setLeaderboard(prevLeaderboard => {
-              const oldScores = new Map<string, number>();
-              prevLeaderboard.forEach(p => {
-                oldScores.set(p.name, p.score);
-              });
-
-              const newLeaderboard: Player[] = leaderboardData.scoreboard.map(userScore => {
-                const oldScore = oldScores.get(userScore.user_name) || 0;
-                return {
-                  id: userScore.user_name,
-                  name: userScore.user_name,
-                  score: userScore.score,
-                  change: userScore.score - oldScore,
-                };
-              });
-              
-              return newLeaderboard;
-            });
-          }
-        } catch (error) {
-          console.error("Failed to parse leaderboard update from WebSocket", error);
-        }
+    // This one subscription handles all messages for the presenter from the server
+    const adminSub = subscribe(TOPIC_ADMIN, (message) => {
+      if (!message.body) {
+        // A null body signifies the end of the quiz
+        setCurrentQuestion(null);
+        setIsQuizOver(true);
+        return;
       }
-    });
 
-    const questionSub = subscribe(TOPIC_QUESTION_BROADCAST, (message) => {
-      console.log("Presenter received question broadcast:", message.body);
-       if (message.body) {
-        try {
-          const question = JSON.parse(message.body);
-          if (question) {
+      try {
+        const data = JSON.parse(message.body);
+        
+        // Case 1: It's a leaderboard update
+        if (data.scoreboard) {
+          const leaderboardData: { scoreboard: { user_name: string; score: number }[] } = data;
+          
+          setLeaderboard(prevLeaderboard => {
+            const oldScores = new Map<string, number>();
+            prevLeaderboard.forEach(p => {
+              oldScores.set(p.name, p.score);
+            });
+
+            const newLeaderboard: Player[] = leaderboardData.scoreboard.map(userScore => {
+              const oldScore = oldScores.get(userScore.user_name) || 0;
+              return {
+                id: userScore.user_name,
+                name: userScore.user_name,
+                score: userScore.score,
+                change: userScore.score - oldScore,
+              };
+            });
+            
+            return newLeaderboard;
+          });
+        } 
+        // Case 2: It's a question update (or end of quiz if question_id is missing/null)
+        else {
+          const question = data as PollQuestionEntity; // Assume anything else is a question or end-of-quiz
+          if (question && question.question_id) {
             setCurrentQuestion(question);
             setQuestionCount(prev => prev + 1);
             setIsQuizStarted(true);
             setIsQuizOver(false);
           } else {
+            // The server sent a null/empty question object to signal the end
             setCurrentQuestion(null);
             setIsQuizOver(true);
           }
-        } catch (error) {
-          console.error("Failed to parse question from WebSocket", error);
-          setCurrentQuestion(null);
-          setIsQuizOver(true);
         }
-      } else {
-        // Null body can also signify end of quiz
-        setCurrentQuestion(null);
-        setIsQuizOver(true);
+      } catch (error) {
+        console.error("Failed to parse admin message from WebSocket", error);
       }
     });
 
     // Cleanup subscriptions on component unmount
     return () => {
-        answerSub?.unsubscribe();
-        questionSub?.unsubscribe();
+        adminSub?.unsubscribe();
     }
   }, [isConnected, subscribe]);
 
