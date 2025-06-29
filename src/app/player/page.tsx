@@ -15,9 +15,13 @@ const APP_SEND_ANSWER = `/app/poll/${pollId}`;
 
 export default function PlayerPage() {
   const [currentQuestion, setCurrentQuestion] = useState<PollQuestionEntity | null>(null);
-  const [playerId] = useState(() => `player_${Math.random().toString(36).substr(2, 9)}`);
+  const [playerId, setPlayerId] = useState<string | null>(null);
   const { toast } = useToast();
   const { connect, publish, subscribe, isConnected } = useWebSocket();
+
+  useEffect(() => {
+    setPlayerId(`player_${Math.random().toString(36).substr(2, 9)}`);
+  }, []);
 
   // Effect to handle WebSocket connection
   useEffect(() => {
@@ -51,21 +55,24 @@ export default function PlayerPage() {
   }, [isConnected, subscribe]);
 
   const handleAnswerSubmit = useCallback((selectedOption: number | null) => {
-    if (!isConnected || !currentQuestion) {
+    if (!isConnected || !currentQuestion || !playerId) {
         toast({
             title: "Connection Error",
-            description: "Cannot submit answer. Not connected or no active question.",
+            description: "Cannot submit answer. Not connected, no active question, or player ID not set.",
             variant: "destructive",
         });
         return;
     }
+    
+    const isCorrect = selectedOption === currentQuestion.correct_option;
+    const points = isCorrect ? currentQuestion.points : 0;
 
-    // The server should be responsible for validating the answer and calculating points.
     const userResponse = {
         user_id: playerId,
         poll_id: pollId,
         index: currentQuestion.question_number,
         response: selectedOption ?? -1, // Send -1 if no option was selected
+        points: points
     };
 
     publish(APP_SEND_ANSWER, JSON.stringify(userResponse));
