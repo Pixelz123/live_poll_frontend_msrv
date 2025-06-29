@@ -91,9 +91,9 @@ function PlayerPageContent() {
                     &larr; Back to Home
                 </Link>
               <h2 className="font-headline text-2xl text-destructive">No Poll ID Provided</h2>
-              <p className="text-muted-foreground mt-2">Please join a poll from the available polls list.</p>
+              <p className="text-muted-foreground mt-2">Please go to the join page and enter a Poll ID.</p>
               <Button asChild className="mt-4">
-                  <Link href="/polls">View Available Polls</Link>
+                  <Link href="/join">Join a Game</Link>
               </Button>
           </div>
       )

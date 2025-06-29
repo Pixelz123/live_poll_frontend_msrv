@@ -28,7 +28,7 @@ export default function Home() {
           </Link>
         </Button>
         <Button asChild size="lg" className="font-bold text-lg py-8 px-10">
-          <Link href="/player" className="flex flex-col items-center justify-center gap-2">
+          <Link href="/join" className="flex flex-col items-center justify-center gap-2">
             <UserPlus className="w-8 h-8" />
             <span>Join Game</span>
           </Link>
