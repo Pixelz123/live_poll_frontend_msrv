@@ -20,6 +20,7 @@ export default function PlayerPage() {
   const { connect, publish, subscribe, isConnected } = useWebSocket();
 
   useEffect(() => {
+    // Generate player ID on client-side to avoid hydration mismatch
     setPlayerId(`player_${Math.random().toString(36).substr(2, 9)}`);
   }, []);
 
