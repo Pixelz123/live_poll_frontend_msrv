@@ -81,19 +81,19 @@ export default function Home() {
             </div>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleJoinGame} className="w-full space-y-3">
+            <form onSubmit={handleJoinGame} className="flex w-full items-center gap-2">
                 <Label htmlFor="pollId" className="sr-only">Poll ID</Label>
                 <Input
                     id="pollId"
                     type="text"
-                    placeholder="Enter your Poll ID..."
+                    placeholder="Enter Poll ID..."
                     value={pollId}
                     onChange={(e) => setPollId(e.target.value)}
                     required
-                    className="flex-grow text-lg h-14 text-center font-mono tracking-widest"
+                    className="h-14 text-lg"
                 />
-                <Button type="submit" size="lg" className="w-full h-14 font-bold" disabled={!pollId.trim()}>
-                    Join Quiz
+                <Button type="submit" className="h-14 shrink-0 px-6 font-bold" disabled={!pollId.trim()}>
+                    Join
                 </Button>
             </form>
           </CardContent>
