@@ -11,7 +11,7 @@ import { Wifi, WifiOff } from "lucide-react";
 
 const pollId = "quiz123"; // Dummy poll ID
 const TOPIC_QUESTION = `/topic/quiz/question/${pollId}`;
-const APP_SEND_ANSWER = `/app/quiz/answer/${pollId}`;
+const APP_SEND_ANSWER = `/app/poll/${pollId}`;
 
 export default function PlayerPage() {
   const [currentQuestion, setCurrentQuestion] = useState<PollQuestionEntity | null>(null);
