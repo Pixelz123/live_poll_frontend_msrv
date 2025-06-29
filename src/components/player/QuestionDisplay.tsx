@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 interface QuestionDisplayProps {
   question: PollQuestionEntity;
-  onAnswer: (isCorrect: boolean) => void;
+  onAnswer: (selectedOption: number | null) => void;
   isOnline: boolean;
 }
 
@@ -41,8 +41,7 @@ export function QuestionDisplay({ question, onAnswer, isOnline }: QuestionDispla
   const handleSubmit = () => {
     if (answerSubmitted) return;
     setAnswerSubmitted(true);
-    const isCorrect = selectedOption === question.correct_option;
-    onAnswer(isCorrect);
+    onAnswer(selectedOption);
   };
 
   const progressValue = (timeLeft / question.timeInSeconds) * 100;

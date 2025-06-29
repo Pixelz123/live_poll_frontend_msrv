@@ -50,24 +50,34 @@ export default function PlayerPage() {
     }
   }, [isConnected, subscribe]);
 
-  const handleAnswerSubmit = useCallback((isCorrect: boolean) => {
-    if (!isConnected) {
+  const handleAnswerSubmit = useCallback((selectedOption: number | null) => {
+    if (!isConnected || !currentQuestion) {
         toast({
             title: "Connection Error",
-            description: "Cannot submit answer, not connected to the server.",
+            description: "Cannot submit answer. Not connected or no active question.",
             variant: "destructive",
         });
         return;
     }
 
-    publish(APP_SEND_ANSWER, JSON.stringify({ playerId, isCorrect }));
+    const isCorrect = selectedOption === currentQuestion.correct_option;
+    const points = isCorrect ? currentQuestion.points : 0;
+
+    const userResponse = {
+        user_id: playerId,
+        poll_id: pollId,
+        index: currentQuestion.question_number,
+        response: selectedOption ?? -1, // Send -1 if no option was selected
+        points: points,
+    };
+
+    publish(APP_SEND_ANSWER, JSON.stringify(userResponse));
     
     toast({
         title: "Answer Submitted!",
         description: "Waiting for the next question.",
-        variant: "default",
     });
-  }, [playerId, toast, publish, isConnected]);
+  }, [playerId, isConnected, publish, toast, currentQuestion]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">

@@ -20,7 +20,7 @@ export default function QuestionPreviewPage() {
       <QuestionDisplay 
         key={sampleQuestion.question_id} 
         question={sampleQuestion}
-        onAnswer={() => { console.log("Answer submitted in preview mode."); }}
+        onAnswer={(selectedOption) => { console.log(`Answer submitted in preview mode. Selected option: ${selectedOption}`); }}
         isOnline={true}
       />
     </div>
