@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Presentation, Users } from "lucide-react";
+import { Presentation, Users, Wifi } from "lucide-react";
 
 export default function Home() {
   return (
@@ -44,6 +44,23 @@ export default function Home() {
               <Link href="/player">Join Game</Link>
             </Button>
           </CardContent>
+        </Card>
+      </div>
+      
+      <div className="w-full max-w-4xl mt-8">
+        <Card className="hover:shadow-lg transition-shadow duration-300">
+            <CardHeader className="items-center text-center">
+                <Wifi className="w-12 h-12 text-accent mb-4" />
+                <CardTitle className="font-headline text-2xl">WebSocket Test</CardTitle>
+                <CardDescription>
+                    Test WebSocket connectivity using SockJS.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+                <Button asChild size="lg" className="font-bold">
+                    <Link href="/websocket-test">Go to Test Page</Link>
+                </Button>
+            </CardContent>
         </Card>
       </div>
     </main>
