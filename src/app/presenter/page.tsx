@@ -11,7 +11,8 @@ import { useWebSocket } from "@/hooks/use-websocket";
 
 const pollId = "quiz123"; // Dummy poll ID
 const TOPIC_ADMIN = `/topic/admin/${pollId}`;
-const APP_SEND_QUESTION = `/app/quiz/question/${pollId}`;
+const APP_START_QUIZ = `/app/start_request/${pollId}`;
+const APP_PROCEED_QUIZ = `/app/proceed/${pollId}`;
 
 export default function PresenterPage() {
   const [leaderboard, setLeaderboard] = useState<Player[]>(initialPlayers);
@@ -85,7 +86,11 @@ export default function PresenterPage() {
 
   const handleProceed = () => {
     setLeaderboard(prev => prev.map(p => ({ ...p, change: 0 })));
-    publish(APP_SEND_QUESTION, JSON.stringify({}));
+    if (!isQuizStarted) {
+      publish(APP_START_QUIZ, JSON.stringify({}));
+    } else {
+      publish(APP_PROCEED_QUIZ, JSON.stringify({}));
+    }
   };
   
   const getStatusMessage = () => {
