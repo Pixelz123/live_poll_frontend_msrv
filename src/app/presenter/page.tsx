@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Leaderboard } from "@/components/presenter/Leaderboard";
-import { initialPlayers, quizQuestions, type Player } from "@/lib/quiz-data";
+import { initialPlayers, type Player, type PollQuestionEntity } from "@/lib/quiz-data";
 import { ArrowRight, Play, CheckCircle, Wifi, WifiOff } from "lucide-react";
 import Link from "next/link";
 import { useWebSocket } from "@/hooks/use-websocket";
@@ -16,10 +16,11 @@ const APP_SEND_QUESTION = `/app/quiz/question/${pollId}`;
 
 export default function PresenterPage() {
   const [leaderboard, setLeaderboard] = useState<Player[]>(initialPlayers);
-  const [questionIndex, setQuestionIndex] = useState<number>(-1);
+  const [currentQuestion, setCurrentQuestion] = useState<PollQuestionEntity | null>(null);
+  const [questionCount, setQuestionCount] = useState<number>(0);
+  const [isQuizStarted, setIsQuizStarted] = useState<boolean>(false);
+  const [isQuizOver, setIsQuizOver] = useState<boolean>(false);
   const { connect, publish, subscribe, isConnected } = useWebSocket();
-
-  const isQuizOver = questionIndex >= quizQuestions.length;
 
   // Effect to handle WebSocket connection
   useEffect(() => {
@@ -62,7 +63,29 @@ export default function PresenterPage() {
     });
 
     const questionSub = subscribe(TOPIC_QUESTION_BROADCAST, (message) => {
-      console.log("Presenter received question broadcast confirmation:", message.body);
+      console.log("Presenter received question broadcast:", message.body);
+       if (message.body) {
+        try {
+          const question = JSON.parse(message.body);
+          if (question) {
+            setCurrentQuestion(question);
+            setQuestionCount(prev => prev + 1);
+            setIsQuizStarted(true);
+            setIsQuizOver(false);
+          } else {
+            setCurrentQuestion(null);
+            setIsQuizOver(true);
+          }
+        } catch (error) {
+          console.error("Failed to parse question from WebSocket", error);
+          setCurrentQuestion(null);
+          setIsQuizOver(true);
+        }
+      } else {
+        // Null body can also signify end of quiz
+        setCurrentQuestion(null);
+        setIsQuizOver(true);
+      }
     });
 
     // Cleanup subscriptions on component unmount
@@ -74,21 +97,17 @@ export default function PresenterPage() {
 
   const handleProceed = () => {
     setLeaderboard(prev => prev.map(p => ({ ...p, change: 0 })));
-    const newIndex = questionIndex + 1;
-    setQuestionIndex(newIndex);
-    
-    const nextQuestion = quizQuestions[newIndex] ?? null;
-    publish(APP_SEND_QUESTION, JSON.stringify(nextQuestion));
+    publish(APP_SEND_QUESTION, JSON.stringify({}));
   };
   
   const getStatusMessage = () => {
-    if (questionIndex === -1) {
-      return "The quiz has not started yet.";
-    }
     if (isQuizOver) {
         return "The quiz has finished. Thanks for playing!";
     }
-    return `Displaying Question ${questionIndex + 1} of ${quizQuestions.length}`;
+    if (!isQuizStarted) {
+      return "The quiz has not started yet.";
+    }
+    return `Displaying Question ${questionCount}`;
   }
 
   return (
@@ -121,20 +140,20 @@ export default function PresenterPage() {
                 </CardHeader>
                 <CardContent className="flex justify-center">
                      <Button onClick={handleProceed} disabled={isQuizOver || !isConnected} size="lg" className="w-full font-bold">
-                        {questionIndex === -1 && <><Play className="mr-2" /> Start Quiz</>}
-                        {questionIndex > -1 && !isQuizOver && <><ArrowRight className="mr-2" /> Proceed</>}
+                        {!isQuizStarted && <><Play className="mr-2" /> Start Quiz</>}
+                        {isQuizStarted && !isQuizOver && <><ArrowRight className="mr-2" /> Proceed</>}
                         {isQuizOver && <><CheckCircle className="mr-2" /> Quiz Finished</>}
                     </Button>
                 </CardContent>
              </Card>
-             {questionIndex >= 0 && !isQuizOver && (
+             {currentQuestion && !isQuizOver && (
                 <Card>
                     <CardHeader>
                         <CardTitle className="font-headline text-xl text-center">Current Question</CardTitle>
                     </CardHeader>
                     <CardContent className="text-center">
-                        <p className="text-lg font-semibold">{quizQuestions[questionIndex].question_content}</p>
-                        <p className="text-sm text-muted-foreground mt-2">Correct Answer: {quizQuestions[questionIndex].options[quizQuestions[questionIndex].correct_option]}</p>
+                        <p className="text-lg font-semibold">{currentQuestion.question_content}</p>
+                        <p className="text-sm text-muted-foreground mt-2">Correct Answer: {currentQuestion.options[currentQuestion.correct_option]}</p>
                     </CardContent>
                 </Card>
              )}

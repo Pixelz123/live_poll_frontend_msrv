@@ -1,12 +1,10 @@
 "use client";
 
 import { QuestionDisplay } from "@/components/player/QuestionDisplay";
-import { quizQuestions } from "@/lib/quiz-data";
+import { sampleQuestion } from "@/lib/quiz-data";
 import Link from "next/link";
 
 export default function QuestionPreviewPage() {
-  const sampleQuestion = quizQuestions[0];
-
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
       <Link href="/" className="absolute top-4 left-4 text-primary hover:underline">

@@ -7,48 +7,14 @@ export interface PollQuestionEntity {
   points: number;
 }
 
-export const quizQuestions: PollQuestionEntity[] = [
-  {
-    question_id: "q1",
-    question_content: "What is the capital of France?",
-    options: ["Berlin", "Madrid", "Paris", "Rome"],
-    timeInSeconds: 20,
-    correct_option: 2,
-    points: 100,
-  },
-  {
-    question_id: "q2",
-    question_content: "Which planet is known as the Red Planet?",
-    options: ["Earth", "Mars", "Jupiter", "Venus"],
-    timeInSeconds: 20,
-    correct_option: 1,
-    points: 100,
-  },
-  {
-    question_id: "q3",
-    question_content: "What is the largest ocean on Earth?",
-    options: ["Atlantic Ocean", "Indian Ocean", "Arctic Ocean", "Pacific Ocean"],
-    timeInSeconds: 25,
-    correct_option: 3,
-    points: 120,
-  },
-  {
-    question_id: "q4",
-    question_content: "Who wrote 'To Kill a Mockingbird'?",
-    options: ["Harper Lee", "J.K. Rowling", "Ernest Hemingway", "Mark Twain"],
-    timeInSeconds: 30,
-    correct_option: 0,
-    points: 150,
-  },
-  {
-    question_id: "q5",
-    question_content: "What is the chemical symbol for gold?",
-    options: ["Ag", "Au", "Pb", "Fe"],
-    timeInSeconds: 15,
-    correct_option: 1,
-    points: 100,
-  },
-];
+export const sampleQuestion: PollQuestionEntity = {
+  question_id: "q1",
+  question_content: "This is a sample question. What is 2 + 2?",
+  options: ["3", "4", "5", "6"],
+  timeInSeconds: 20,
+  correct_option: 1,
+  points: 100,
+};
 
 export interface Player {
     id: string;
