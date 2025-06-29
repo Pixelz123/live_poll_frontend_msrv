@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Presentation, Users, FileQuestion } from "lucide-react";
+import { ListChecks, UserPlus, Presentation } from "lucide-react";
 
 export default function Home() {
   return (
@@ -15,51 +14,25 @@ export default function Home() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl">
-        <Card className="hover:shadow-lg transition-shadow duration-300">
-          <CardHeader className="items-center text-center">
-            <Presentation className="w-12 h-12 text-accent mb-4" />
-            <CardTitle className="font-headline text-2xl">Presenter View</CardTitle>
-            <CardDescription>
-              Host and control the quiz in real-time.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <Button asChild size="lg" className="font-bold">
-              <Link href="/presenter">Start Presenting</Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow duration-300">
-          <CardHeader className="items-center text-center">
-            <Users className="w-12 h-12 text-accent mb-4" />
-            <CardTitle className="font-headline text-2xl">Player View</CardTitle>
-            <CardDescription>
-              Join the game and test your knowledge.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <Button asChild size="lg" className="font-bold">
-              <Link href="/player">Join Game</Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow duration-300 md:col-span-2 lg:col-span-1">
-          <CardHeader className="items-center text-center">
-            <FileQuestion className="w-12 h-12 text-accent mb-4" />
-            <CardTitle className="font-headline text-2xl">Question Preview</CardTitle>
-            <CardDescription>
-              See how a sample question will look.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <Button asChild size="lg" className="font-bold">
-              <Link href="/question-preview">Preview Question</Link>
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="flex flex-col sm:flex-row gap-6">
+        <Button asChild size="lg" className="font-bold text-lg py-8 px-10">
+          <Link href="/polls" className="flex flex-col items-center justify-center gap-2">
+            <ListChecks className="w-8 h-8" />
+            <span>Available Polls</span>
+          </Link>
+        </Button>
+        <Button asChild size="lg" className="font-bold text-lg py-8 px-10">
+          <Link href="/presenter" className="flex flex-col items-center justify-center gap-2">
+            <Presentation className="w-8 h-8" />
+            <span>Start Presenting</span>
+          </Link>
+        </Button>
+        <Button asChild size="lg" className="font-bold text-lg py-8 px-10">
+          <Link href="/player" className="flex flex-col items-center justify-center gap-2">
+            <UserPlus className="w-8 h-8" />
+            <span>Join Game</span>
+          </Link>
+        </Button>
       </div>
     </main>
   );
