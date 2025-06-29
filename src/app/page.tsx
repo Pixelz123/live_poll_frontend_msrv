@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ListChecks, Presentation, UserPlus, Zap } from "lucide-react";
+import { ListChecks, Presentation, UserPlus, Zap, FilePlus } from "lucide-react";
 
 export default function Home() {
   const [pollId, setPollId] = useState("");
@@ -52,13 +52,13 @@ export default function Home() {
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <Button asChild size="lg" className="w-full">
-              <Link href="/polls">
-                <ListChecks className="mr-2" /> View Available Polls
+              <Link href="/create-quiz">
+                <FilePlus className="mr-2" /> Create New Quiz
               </Link>
             </Button>
             <Button asChild size="lg" variant="secondary" className="w-full">
-              <Link href="/presenter">
-                <Presentation className="mr-2" /> Go to Dashboard
+              <Link href="/polls">
+                <ListChecks className="mr-2" /> View Available Polls
               </Link>
             </Button>
           </CardContent>
