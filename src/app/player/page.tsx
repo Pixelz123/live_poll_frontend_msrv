@@ -24,7 +24,7 @@ export default function PlayerPage() {
     connect();
   }, [connect]);
 
-  // Effect to handle subscriptions
+  // Effect to handle subscriptions for question updates
   useEffect(() => {
     if (!isConnected) return;
 
@@ -35,9 +35,11 @@ export default function PlayerPage() {
           setCurrentQuestion(question);
         } catch (error) {
           console.error("Failed to parse question from WebSocket", error);
+          // If parsing fails, revert to waiting screen
           setCurrentQuestion(null);
         }
       } else {
+        // An empty message body signals to return to the waiting screen (e.g., between questions or quiz end)
         setCurrentQuestion(null);
       }
     });
