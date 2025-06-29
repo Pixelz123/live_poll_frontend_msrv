@@ -10,7 +10,7 @@ import { useWebSocket } from "@/hooks/use-websocket";
 import { Wifi, WifiOff } from "lucide-react";
 
 const pollId = "quiz123"; // Dummy poll ID
-const TOPIC_QUESTION = `/topic/quiz/question/${pollId}`;
+const TOPIC_POLL = `/topic/${pollId}`;
 const APP_SEND_ANSWER = `/app/poll/${pollId}`;
 
 export default function PlayerPage() {
@@ -28,7 +28,7 @@ export default function PlayerPage() {
   useEffect(() => {
     if (!isConnected) return;
 
-    const subscription = subscribe(TOPIC_QUESTION, (message) => {
+    const subscription = subscribe(TOPIC_POLL, (message) => {
       if (message.body) {
         try {
           const question = JSON.parse(message.body);
