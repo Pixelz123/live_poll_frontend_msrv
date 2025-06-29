@@ -17,13 +17,18 @@ export default function PresenterPage() {
   const [leaderboard, setLeaderboard] = useState<Player[]>(initialPlayers);
   const [questionIndex, setQuestionIndex] = useState<number>(-1);
   const { toast } = useToast();
-  const { connect, publish, subscribe, isConnected, client } = useWebSocket();
+  const { connect, publish, subscribe, isConnected } = useWebSocket();
 
   const isQuizOver = questionIndex >= quizQuestions.length -1;
 
-  // Effect to handle WebSocket connection and subscriptions
+  // Effect to handle WebSocket connection
   useEffect(() => {
     connect();
+  }, [connect]);
+
+  // Effect to handle subscriptions
+  useEffect(() => {
+    if (!isConnected) return;
 
     const subscription = subscribe(TOPIC_ANSWER, (message) => {
       if (message.body) {
@@ -48,11 +53,11 @@ export default function PresenterPage() {
       }
     });
 
-    // Cleanup subscription on component unmount or when client changes
+    // Cleanup subscription on component unmount
     return () => {
         subscription?.unsubscribe();
     }
-  }, [client, connect, subscribe, toast, questionIndex]);
+  }, [isConnected, subscribe, toast, questionIndex]);
 
   const handleProceed = () => {
     if (!isQuizOver) {

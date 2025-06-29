@@ -16,11 +16,16 @@ export default function PlayerPage() {
   const [currentQuestion, setCurrentQuestion] = useState<PollQuestionEntity | null>(null);
   const [playerId] = useState(() => `player_${Math.random().toString(36).substr(2, 9)}`);
   const { toast } = useToast();
-  const { connect, publish, subscribe, isConnected, client } = useWebSocket();
+  const { connect, publish, subscribe, isConnected } = useWebSocket();
 
-  // Effect to handle WebSocket connection and subscriptions
+  // Effect to handle WebSocket connection
   useEffect(() => {
     connect();
+  }, [connect]);
+
+  // Effect to handle subscriptions
+  useEffect(() => {
+    if (!isConnected) return;
 
     const subscription = subscribe(TOPIC_QUESTION, (message) => {
       if (message.body) {
@@ -36,11 +41,11 @@ export default function PlayerPage() {
       }
     });
     
-    // Cleanup subscription on component unmount or when client changes
+    // Cleanup subscription on component unmount
     return () => {
         subscription?.unsubscribe();
     }
-  }, [client, connect, subscribe]);
+  }, [isConnected, subscribe]);
 
   const handleAnswerSubmit = useCallback((isCorrect: boolean) => {
     if (!isConnected) {
