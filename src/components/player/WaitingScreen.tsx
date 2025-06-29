@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2, WifiOff } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface WaitingScreenProps {
   isOnline?: boolean;
@@ -10,7 +10,7 @@ interface WaitingScreenProps {
 export function WaitingScreen({ isOnline = true }: WaitingScreenProps) {
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <Card className={!isOnline ? "border-destructive" : "animate-pulse"}>
+      <Card className={!isOnline ? "border-destructive shadow-lg" : "animate-pulse"}>
         <CardContent className="flex flex-col items-center justify-center p-12 text-center">
           {isOnline ? (
             <>

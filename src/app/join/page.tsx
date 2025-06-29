@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { UserPlus } from "lucide-react";
+import { UserPlus, ArrowLeft } from "lucide-react";
 
 export default function JoinGamePage() {
   const [pollId, setPollId] = useState("");
@@ -21,14 +21,19 @@ export default function JoinGamePage() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-background">
-      <Link href="/" className="absolute top-4 left-4 text-primary hover:underline">
-        &larr; Back to Home
-      </Link>
-      <Card className="w-full max-w-md">
+    <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-gradient-to-b from-background to-secondary">
+      <div className="absolute top-6 left-6">
+        <Button asChild variant="outline" size="sm">
+          <Link href="/">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Home
+          </Link>
+        </Button>
+      </div>
+      <Card className="w-full max-w-md shadow-2xl animate-in fade-in-50 zoom-in-95 duration-500">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <UserPlus className="w-12 h-12 text-primary" />
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <UserPlus className="w-8 h-8" />
           </div>
           <CardTitle className="font-headline text-4xl">Join a Game</CardTitle>
           <CardDescription>
@@ -36,9 +41,9 @@ export default function JoinGamePage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleJoinGame} className="w-full">
-            <Label htmlFor="pollId" className="sr-only">Poll ID</Label>
-            <div className="flex items-center space-x-2">
+          <form onSubmit={handleJoinGame} className="w-full space-y-4">
+            <div>
+                <Label htmlFor="pollId" className="sr-only">Poll ID</Label>
                 <Input
                     id="pollId"
                     type="text"
@@ -46,12 +51,12 @@ export default function JoinGamePage() {
                     value={pollId}
                     onChange={(e) => setPollId(e.target.value)}
                     required
-                    className="flex-grow text-lg h-14"
+                    className="flex-grow text-lg h-14 text-center tracking-widest font-mono"
                 />
-                <Button type="submit" size="lg" className="h-14 font-bold" disabled={!pollId.trim()}>
-                    Join Quiz
-                </Button>
             </div>
+            <Button type="submit" size="lg" className="h-14 w-full font-bold text-lg" disabled={!pollId.trim()}>
+                Join Quiz
+            </Button>
           </form>
         </CardContent>
       </Card>

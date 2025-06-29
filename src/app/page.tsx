@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ListChecks, Presentation, UserPlus } from "lucide-react";
+import { ListChecks, Presentation, UserPlus, Zap } from "lucide-react";
 
 export default function Home() {
   const [pollId, setPollId] = useState("");
@@ -21,61 +21,80 @@ export default function Home() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-12 p-8 bg-background">
-      <div className="text-center">
-        <h1 className="font-headline text-5xl md:text-7xl font-bold text-primary">
+    <main className="flex min-h-screen w-full flex-col items-center justify-center bg-gradient-to-br from-background via-secondary/50 to-background p-4">
+      <div className="absolute top-4 right-4">
+        <Button variant="ghost" size="sm">v1.0.0</Button>
+      </div>
+      <div className="text-center mb-16 animate-in fade-in-50 slide-in-from-top-10 duration-500">
+        <div className="inline-block rounded-full bg-primary/10 p-4 mb-4">
+          <Zap className="h-10 w-10 text-primary" />
+        </div>
+        <h1 className="font-headline text-5xl md:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400">
           QuizWhiz
         </h1>
-        <p className="text-muted-foreground mt-2 text-lg">
+        <p className="text-muted-foreground mt-2 text-lg md:text-xl">
           The ultimate multiplayer quiz experience.
         </p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-6">
-        <Button asChild size="lg" className="font-bold text-lg py-8 px-10">
-          <Link href="/polls" className="flex flex-col items-center justify-center gap-2">
-            <ListChecks className="w-8 h-8" />
-            <span>Available Polls</span>
-          </Link>
-        </Button>
-        <Button asChild size="lg" className="font-bold text-lg py-8 px-10">
-          <Link href="/presenter" className="flex flex-col items-center justify-center gap-2">
-            <Presentation className="w-8 h-8" />
-            <span>Start Presenting</span>
-          </Link>
-        </Button>
-      </div>
-      
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-                <UserPlus className="w-10 h-10 text-primary" />
+      <div className="grid w-full max-w-4xl grid-cols-1 gap-8 md:grid-cols-2 animate-in fade-in-50 slide-in-from-bottom-10 duration-500">
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Presentation className="h-6 w-6" />
+              </div>
+              <div>
+                <CardTitle className="font-headline text-2xl">Presenter</CardTitle>
+                <CardDescription>Create & host quizzes</CardDescription>
+              </div>
             </div>
-            <CardTitle className="font-headline text-3xl">Join a Game</CardTitle>
-            <CardDescription>
-                Enter the Poll ID to join a quiz.
-            </CardDescription>
-        </CardHeader>
-        <CardContent>
-            <form onSubmit={handleJoinGame} className="w-full">
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <Button asChild size="lg" className="w-full">
+              <Link href="/polls">
+                <ListChecks className="mr-2" /> View Available Polls
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="secondary" className="w-full">
+              <Link href="/presenter">
+                <Presentation className="mr-2" /> Go to Dashboard
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+        
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <div className="flex items-center gap-4">
+               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <UserPlus className="h-6 w-6" />
+              </div>
+              <div>
+                <CardTitle className="font-headline text-2xl">Player</CardTitle>
+                <CardDescription>Join a game and play</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleJoinGame} className="w-full space-y-3">
                 <Label htmlFor="pollId" className="sr-only">Poll ID</Label>
-                <div className="flex items-center space-x-2">
-                    <Input
-                        id="pollId"
-                        type="text"
-                        placeholder="Enter your Poll ID"
-                        value={pollId}
-                        onChange={(e) => setPollId(e.target.value)}
-                        required
-                        className="flex-grow text-lg h-14"
-                    />
-                    <Button type="submit" size="lg" className="h-14 font-bold" disabled={!pollId.trim()}>
-                        Join
-                    </Button>
-                </div>
+                <Input
+                    id="pollId"
+                    type="text"
+                    placeholder="Enter your Poll ID..."
+                    value={pollId}
+                    onChange={(e) => setPollId(e.target.value)}
+                    required
+                    className="flex-grow text-lg h-14 text-center font-mono tracking-widest"
+                />
+                <Button type="submit" size="lg" className="w-full h-14 font-bold" disabled={!pollId.trim()}>
+                    Join Quiz
+                </Button>
             </form>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
     </main>
   );

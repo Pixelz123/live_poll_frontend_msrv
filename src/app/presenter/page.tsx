@@ -1,13 +1,12 @@
-
 "use client";
 
 import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Leaderboard } from "@/components/presenter/Leaderboard";
 import { initialPlayers, type Player } from "@/lib/quiz-data";
-import { ArrowRight, Play, CheckCircle, Wifi, WifiOff, Loader2 } from "lucide-react";
+import { ArrowRight, Play, CheckCircle, Wifi, WifiOff, Loader2, Home, BarChart3, Settings, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useWebSocket } from "@/hooks/use-websocket";
 
@@ -101,11 +100,14 @@ function PresenterPageContent() {
   };
   
   const getStatusMessage = () => {
+    if (!isConnected) {
+        return "Connecting to server...";
+    }
     if (isQuizOver) {
         return "The quiz has finished. Thanks for playing!";
     }
     if (!isQuizStarted) {
-      return "The quiz has not started yet.";
+      return "The quiz is ready to begin.";
     }
     return `Displaying Question ${questionCount}`;
   }
@@ -113,57 +115,86 @@ function PresenterPageContent() {
   if (!pollId) {
       return (
           <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 text-center">
-               <Link href="/" className="absolute top-4 left-4 text-primary hover:underline">
-                    &larr; Back to Home
-                </Link>
-              <h2 className="font-headline text-2xl text-destructive">No Poll ID Provided</h2>
-              <p className="text-muted-foreground mt-2">Please select a poll from the available polls list.</p>
-              <Button asChild className="mt-4">
-                  <Link href="/polls">View Available Polls</Link>
-              </Button>
+              <Card className="w-full max-w-lg">
+                <CardHeader>
+                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+                        <AlertTriangle className="w-8 h-8" />
+                    </div>
+                    <CardTitle className="font-headline text-3xl">No Poll ID Provided</CardTitle>
+                    <CardDescription>Please select a poll from the available polls list to start presenting.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button asChild className="w-full" size="lg">
+                        <Link href="/polls">View Available Polls</Link>
+                    </Button>
+                </CardContent>
+              </Card>
           </div>
       )
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 sm:p-6 md:p-8">
-      <Link href="/" className="absolute top-4 left-4 text-primary hover:underline">
-        &larr; Back to Home
-      </Link>
-       <div className="absolute top-4 right-4 flex items-center gap-2">
-        {isConnected ? (
-          <span className="text-green-600 flex items-center gap-1">
-            <Wifi className="w-4 h-4" /> Connected
-          </span>
-        ) : (
-          <span className="text-red-600 flex items-center gap-1">
-            <WifiOff className="w-4 h-4" /> Disconnected
-          </span>
-        )}
+    <div className="min-h-screen bg-gradient-to-b from-background to-secondary flex flex-col items-center p-4 sm:p-6 md:p-8">
+      <div className="absolute top-4 left-4">
+         <Button asChild variant="outline" size="sm">
+            <Link href="/">
+                <Home className="mr-2 h-4 w-4" /> Home
+            </Link>
+        </Button>
       </div>
-      <div className="w-full max-w-4xl mx-auto">
-        <header className="text-center mb-8">
+       <div className="absolute top-4 right-4">
+        <div className="flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-sm text-muted-foreground">
+            {isConnected ? (
+            <span className="flex items-center gap-2 text-green-500">
+                <Wifi className="w-4 h-4" /> Connected
+            </span>
+            ) : (
+            <span className="flex items-center gap-2 text-destructive">
+                <WifiOff className="w-4 h-4" /> Disconnected
+            </span>
+            )}
+        </div>
+      </div>
+      <div className="w-full max-w-6xl mx-auto">
+        <header className="text-center mb-8 animate-in fade-in-50 duration-500">
           <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary">Presenter Dashboard</h1>
-          <p className="text-muted-foreground text-sm">Quiz ID: {pollId}</p>
-          <p className="text-muted-foreground mt-2 text-lg">{getStatusMessage()}</p>
+          <p className="text-muted-foreground text-sm font-mono mt-1">Quiz ID: {pollId}</p>
         </header>
         
-        <main className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="md:col-span-1 flex flex-col gap-8">
+        <main className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in-50 slide-in-from-bottom-10 duration-500">
+          <div className="lg:col-span-1 flex flex-col gap-8">
              <Card>
                 <CardHeader>
-                    <CardTitle className="font-headline text-2xl text-center">Controls</CardTitle>
+                    <CardTitle className="flex items-center gap-3 font-headline text-2xl">
+                        <Settings className="w-6 h-6 text-primary" />
+                        Controls
+                    </CardTitle>
                 </CardHeader>
-                <CardContent className="flex justify-center">
-                     <Button onClick={handleProceed} disabled={isQuizOver || !isConnected} size="lg" className="w-full font-bold">
+                <CardContent className="space-y-4">
+                     <div className="p-4 bg-muted rounded-lg text-center">
+                        <p className="font-medium">Status</p>
+                        <p className="text-muted-foreground text-sm">{getStatusMessage()}</p>
+                     </div>
+                     <Button onClick={handleProceed} disabled={isQuizOver || !isConnected} size="lg" className="w-full font-bold text-lg h-14">
                         {!isQuizStarted && <><Play className="mr-2" /> Start Quiz</>}
                         {isQuizStarted && !isQuizOver && <><ArrowRight className="mr-2" /> Proceed</>}
                         {isQuizOver && <><CheckCircle className="mr-2" /> Quiz Finished</>}
                     </Button>
                 </CardContent>
              </Card>
+             <Card>
+                <CardHeader>
+                     <CardTitle className="flex items-center gap-3 font-headline text-2xl">
+                        <BarChart3 className="w-6 h-6 text-primary" />
+                        Live Results
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground text-center">Live results will appear here after each question.</p>
+                </CardContent>
+             </Card>
           </div>
-          <div className="md:col-span-2">
+          <div className="lg:col-span-2">
             <Leaderboard players={leaderboard} />
           </div>
         </main>
@@ -176,7 +207,7 @@ function LoadingFallback() {
     return (
         <div className="min-h-screen bg-background flex flex-col items-center justify-center">
             <Loader2 className="w-16 h-16 text-primary animate-spin" />
-            <p className="text-muted-foreground mt-4">Loading Dashboard...</p>
+            <p className="text-muted-foreground mt-4 font-headline text-xl">Loading Dashboard...</p>
         </div>
     )
 }
