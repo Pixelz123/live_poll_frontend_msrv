@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm, useFieldArray, Controller } from "react-hook-form";
+import { useForm, useFieldArray, Controller, Control, UseFormRegister, FormState } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,142 @@ const pollSchema = z.object({
 });
 
 type PollFormValues = z.infer<typeof pollSchema>;
+
+
+const QuestionItem = ({
+  control,
+  index,
+  remove,
+  questionCount,
+  register,
+  formState,
+}: {
+  control: Control<PollFormValues>;
+  index: number;
+  remove: (index: number) => void;
+  questionCount: number;
+  register: UseFormRegister<PollFormValues>;
+  formState: FormState<PollFormValues>;
+}) => {
+  const { fields: optionFields, append: appendOption, remove: removeOption } = useFieldArray({
+    control,
+    name: `question_set.${index}.options`,
+  });
+
+  return (
+    <Card className="relative pt-8">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="absolute top-2 right-2 text-muted-foreground hover:text-destructive"
+        onClick={() => remove(index)}
+        disabled={questionCount <= 1}
+      >
+        <Trash2 className="h-4 w-4" />
+        <span className="sr-only">Remove Question</span>
+      </Button>
+      <CardHeader>
+        <CardTitle>Question {index + 1}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div>
+          <Label htmlFor={`question_set.${index}.question_content`}>Question Text</Label>
+          <Textarea
+            id={`question_set.${index}.question_content`}
+            {...register(`question_set.${index}.question_content`)}
+          />
+          {formState.errors.question_set?.[index]?.question_content && (
+            <p className="text-sm text-destructive mt-1">
+              {formState.errors.question_set?.[index]?.question_content?.message}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-4">
+          <Label>Options & Correct Answer</Label>
+          <Controller
+            name={`question_set.${index}.correct_option`}
+            control={control}
+            render={({ field: radioField }) => (
+              <RadioGroup
+                onValueChange={(value) => radioField.onChange(parseInt(value, 10))}
+                value={String(radioField.value)}
+                className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-2"
+              >
+                {optionFields.map((item, optionIndex) => (
+                  <div key={item.id} className="flex items-center space-x-2">
+                    <RadioGroupItem value={String(optionIndex)} id={`q${index}-opt${optionIndex}`} />
+                    <div className="flex-1 flex items-center gap-2">
+                      <Input
+                        {...register(`question_set.${index}.options.${optionIndex}`)}
+                        placeholder={`Option ${optionIndex + 1}`}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="shrink-0 text-muted-foreground hover:text-destructive"
+                        onClick={() => removeOption(optionIndex)}
+                        disabled={optionFields.length <= 2}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">Remove Option</span>
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </RadioGroup>
+            )}
+          />
+          <Button type="button" variant="outline" size="sm" onClick={() => appendOption("")}>
+            <PlusCircle className="mr-2 h-4 w-4" /> Add Option
+          </Button>
+          {formState.errors.question_set?.[index]?.options && (
+            <p className="text-sm text-destructive mt-1">
+              {formState.errors.question_set[index]?.options?.message || 'Each option must not be empty.'}
+            </p>
+          )}
+          {formState.errors.question_set?.[index]?.correct_option && (
+            <p className="text-sm text-destructive mt-1">
+              {formState.errors.question_set[index]?.correct_option?.message}
+            </p>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor={`question_set.${index}.timeInSeconds`}>Time (seconds)</Label>
+            <Input
+              id={`question_set.${index}.timeInSeconds`}
+              type="number"
+              {...register(`question_set.${index}.timeInSeconds`)}
+            />
+            {formState.errors.question_set?.[index]?.timeInSeconds && (
+              <p className="text-sm text-destructive mt-1">
+                {formState.errors.question_set?.[index]?.timeInSeconds?.message}
+              </p>
+            )}
+          </div>
+          <div>
+            <Label htmlFor={`question_set.${index}.points`}>Points</Label>
+            <Input
+              id={`question_set.${index}.points`}
+              type="number"
+              {...register(`question_set.${index}.points`)}
+            />
+            {formState.errors.question_set?.[index]?.points && (
+              <p className="text-sm text-destructive mt-1">
+                {formState.errors.question_set?.[index]?.points?.message}
+              </p>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 
 export default function CreateQuizPage() {
   const { toast } = useToast();
@@ -133,118 +269,17 @@ export default function CreateQuizPage() {
             </CardContent>
           </Card>
 
-          {fields.map((field, index) => {
-            const { fields: optionFields, append: appendOption, remove: removeOption } = useFieldArray({
-                control: form.control,
-                name: `question_set.${index}.options`
-            });
-
-            return (
-                <Card key={field.id} className="relative pt-8">
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-2 right-2 text-muted-foreground hover:text-destructive"
-                    onClick={() => remove(index)}
-                    disabled={fields.length <= 1}
-                >
-                    <Trash2 className="h-4 w-4" />
-                    <span className="sr-only">Remove Question</span>
-                </Button>
-                <CardHeader>
-                    <CardTitle>Question {index + 1}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div>
-                        <Label htmlFor={`question_set.${index}.question_content`}>Question Text</Label>
-                        <Textarea
-                        id={`question_set.${index}.question_content`}
-                        {...form.register(`question_set.${index}.question_content`)}
-                        />
-                        {form.formState.errors.question_set?.[index]?.question_content && <p className="text-sm text-destructive mt-1">{form.formState.errors.question_set?.[index]?.question_content?.message}</p>}
-                    </div>
-
-                    <div className="space-y-4">
-                        <Label>Options & Correct Answer</Label>
-                        <Controller
-                            name={`question_set.${index}.correct_option`}
-                            control={form.control}
-                            render={({ field: radioField }) => (
-                            <RadioGroup
-                                onValueChange={(value) => radioField.onChange(parseInt(value, 10))}
-                                value={String(radioField.value)}
-                                className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-2"
-                            >
-                                {optionFields.map((item, optionIndex) => (
-                                <div key={item.id} className="flex items-center space-x-2">
-                                    <RadioGroupItem value={String(optionIndex)} id={`q${index}-opt${optionIndex}`} />
-                                    <div className="flex-1 flex items-center gap-2">
-                                    <Input
-                                        {...form.register(`question_set.${index}.options.${optionIndex}`)}
-                                        placeholder={`Option ${optionIndex + 1}`}
-                                    />
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        className="shrink-0 text-muted-foreground hover:text-destructive"
-                                        onClick={() => removeOption(optionIndex)}
-                                        disabled={optionFields.length <= 2}
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                        <span className="sr-only">Remove Option</span>
-                                    </Button>
-                                    </div>
-                                </div>
-                                ))}
-                            </RadioGroup>
-                            )}
-                        />
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => appendOption("")}
-                        >
-                            <PlusCircle className="mr-2 h-4 w-4" /> Add Option
-                        </Button>
-                        {form.formState.errors.question_set?.[index]?.options && (
-                            <p className="text-sm text-destructive mt-1">
-                                {form.formState.errors.question_set[index]?.options?.message || 'Each option must not be empty.'}
-                            </p>
-                        )}
-                        {form.formState.errors.question_set?.[index]?.correct_option && (
-                            <p className="text-sm text-destructive mt-1">
-                                {form.formState.errors.question_set[index]?.correct_option?.message}
-                            </p>
-                        )}
-                    </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <Label htmlFor={`question_set.${index}.timeInSeconds`}>Time (seconds)</Label>
-                            <Input
-                                id={`question_set.${index}.timeInSeconds`}
-                                type="number"
-                                {...form.register(`question_set.${index}.timeInSeconds`)}
-                            />
-                            {form.formState.errors.question_set?.[index]?.timeInSeconds && <p className="text-sm text-destructive mt-1">{form.formState.errors.question_set?.[index]?.timeInSeconds?.message}</p>}
-                        </div>
-                        <div>
-                            <Label htmlFor={`question_set.${index}.points`}>Points</Label>
-                            <Input
-                                id={`question_set.${index}.points`}
-                                type="number"
-                                {...form.register(`question_set.${index}.points`)}
-                            />
-                            {form.formState.errors.question_set?.[index]?.points && <p className="text-sm text-destructive mt-1">{form.formState.errors.question_set?.[index]?.points?.message}</p>}
-                        </div>
-                    </div>
-                </CardContent>
-                </Card>
-            );
-          })}
+          {fields.map((field, index) => (
+            <QuestionItem
+              key={field.id}
+              control={form.control}
+              index={index}
+              remove={remove}
+              questionCount={fields.length}
+              register={form.register}
+              formState={form.formState}
+            />
+          ))}
           
           <div className="flex justify-between items-center">
              <Button
