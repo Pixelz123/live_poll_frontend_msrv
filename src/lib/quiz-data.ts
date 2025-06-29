@@ -57,9 +57,4 @@ export interface Player {
     change: number;
 }
 
-export const initialPlayers: Player[] = [
-    { id: 'player1', name: 'Alice', score: 0, change: 0 },
-    { id: 'player2', name: 'Bob', score: 0, change: 0 },
-    { id: 'player3', name: 'Charlie', score: 0, change: 0 },
-    { id: 'player4', name: 'Diana', score: 0, change: 0 },
-];
+export const initialPlayers: Player[] = [];

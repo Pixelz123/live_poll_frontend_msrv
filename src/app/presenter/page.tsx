@@ -7,7 +7,6 @@ import { Leaderboard } from "@/components/presenter/Leaderboard";
 import { initialPlayers, quizQuestions, type Player } from "@/lib/quiz-data";
 import { ArrowRight, Play, CheckCircle, Wifi, WifiOff } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
 import { useWebSocket } from "@/hooks/use-websocket";
 
 const TOPIC_ANSWER = "/topic/quiz/answer";
@@ -16,7 +15,6 @@ const APP_SEND_QUESTION = "/app/quiz/question";
 export default function PresenterPage() {
   const [leaderboard, setLeaderboard] = useState<Player[]>(initialPlayers);
   const [questionIndex, setQuestionIndex] = useState<number>(-1);
-  const { toast } = useToast();
   const { connect, publish, subscribe, isConnected } = useWebSocket();
 
   const isQuizOver = questionIndex >= quizQuestions.length -1;
@@ -32,23 +30,31 @@ export default function PresenterPage() {
 
     const subscription = subscribe(TOPIC_ANSWER, (message) => {
       if (message.body) {
-         try {
-          const { playerId, isCorrect } = JSON.parse(message.body);
-          const currentQuestion = quizQuestions[questionIndex];
+        try {
+          const leaderboardData: { scoreboard: { user_name: string; score: number }[] } = JSON.parse(message.body);
+          
+          if (leaderboardData.scoreboard) {
+            setLeaderboard(prevLeaderboard => {
+              const oldScores = new Map<string, number>();
+              prevLeaderboard.forEach(p => {
+                oldScores.set(p.name, p.score);
+              });
 
-          if (isCorrect && currentQuestion) {
-            setLeaderboard(prev => {
-                const points = currentQuestion.points;
-                const player = prev.find(p => p.id === playerId);
-                toast({
-                    title: `Correct answer from ${player?.name || 'a player'}!`,
-                    description: `+${points} points awarded.`,
-                });
-                return prev.map(p => p.id === playerId ? { ...p, score: p.score + points, change: points } : {...p, change: 0});
+              const newLeaderboard: Player[] = leaderboardData.scoreboard.map(userScore => {
+                const oldScore = oldScores.get(userScore.user_name) || 0;
+                return {
+                  id: userScore.user_name,
+                  name: userScore.user_name,
+                  score: userScore.score,
+                  change: userScore.score - oldScore,
+                };
+              });
+              
+              return newLeaderboard;
             });
           }
         } catch (error) {
-          console.error("Failed to parse answer from WebSocket", error);
+          console.error("Failed to parse leaderboard update from WebSocket", error);
         }
       }
     });
@@ -57,7 +63,7 @@ export default function PresenterPage() {
     return () => {
         subscription?.unsubscribe();
     }
-  }, [isConnected, subscribe, toast, questionIndex]);
+  }, [isConnected, subscribe]);
 
   const handleProceed = () => {
     if (!isQuizOver) {
