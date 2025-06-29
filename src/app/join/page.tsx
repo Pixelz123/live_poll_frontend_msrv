@@ -36,22 +36,22 @@ export default function JoinGamePage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleJoinGame} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="pollId" className="font-bold">Poll ID</Label>
-              <Input
-                id="pollId"
-                type="text"
-                placeholder="e.g., quiz123"
-                value={pollId}
-                onChange={(e) => setPollId(e.target.value)}
-                required
-                className="text-center text-lg h-12"
-              />
+          <form onSubmit={handleJoinGame} className="w-full">
+            <Label htmlFor="pollId" className="sr-only">Poll ID</Label>
+            <div className="flex items-center space-x-2">
+                <Input
+                    id="pollId"
+                    type="text"
+                    placeholder="Enter your Poll ID"
+                    value={pollId}
+                    onChange={(e) => setPollId(e.target.value)}
+                    required
+                    className="flex-grow text-lg h-14"
+                />
+                <Button type="submit" size="lg" className="h-14 font-bold" disabled={!pollId.trim()}>
+                    Join Quiz
+                </Button>
             </div>
-            <Button type="submit" className="w-full font-bold" size="lg" disabled={!pollId.trim()}>
-              Join Quiz
-            </Button>
           </form>
         </CardContent>
       </Card>
