@@ -204,6 +204,8 @@ export default function CreateQuizPage() {
       })),
     };
 
+    console.log("Quiz JSON Payload:", JSON.stringify(payload, null, 2));
+
     try {
       // NOTE: Replace '/api/polls' with your actual backend endpoint
       const response = await fetch('/api/polls', {
