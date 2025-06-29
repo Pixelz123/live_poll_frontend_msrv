@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Leaderboard } from "@/components/presenter/Leaderboard";
-import { initialPlayers, type Player, type PollQuestionEntity } from "@/lib/quiz-data";
+import { initialPlayers, type Player } from "@/lib/quiz-data";
 import { ArrowRight, Play, CheckCircle, Wifi, WifiOff } from "lucide-react";
 import Link from "next/link";
 import { useWebSocket } from "@/hooks/use-websocket";
@@ -15,7 +15,6 @@ const APP_SEND_QUESTION = `/app/quiz/question/${pollId}`;
 
 export default function PresenterPage() {
   const [leaderboard, setLeaderboard] = useState<Player[]>(initialPlayers);
-  const [currentQuestion, setCurrentQuestion] = useState<PollQuestionEntity | null>(null);
   const [questionCount, setQuestionCount] = useState<number>(0);
   const [isQuizStarted, setIsQuizStarted] = useState<boolean>(false);
   const [isQuizOver, setIsQuizOver] = useState<boolean>(false);
@@ -33,8 +32,6 @@ export default function PresenterPage() {
     // This one subscription handles all messages for the presenter from the server
     const adminSub = subscribe(TOPIC_ADMIN, (message) => {
       if (!message.body) {
-        // A null body signifies the end of the quiz
-        setCurrentQuestion(null);
         setIsQuizOver(true);
         return;
       }
@@ -65,19 +62,15 @@ export default function PresenterPage() {
             return newLeaderboard;
           });
         } 
-        // Case 2: It's a question update (or end of quiz if question_id is missing/null)
-        else {
-          const question = data as PollQuestionEntity; // Assume anything else is a question or end-of-quiz
-          if (question && question.question_id) {
-            setCurrentQuestion(question);
-            setQuestionCount(prev => prev + 1);
+        // Case 2: It's a question number update from the server
+        else if (data.question_number) {
+            setQuestionCount(data.question_number);
             setIsQuizStarted(true);
             setIsQuizOver(false);
-          } else {
-            // The server sent a null/empty question object to signal the end
-            setCurrentQuestion(null);
+        }
+        // Case 3: The quiz is over
+        else if (data.status === 'finished') {
             setIsQuizOver(true);
-          }
         }
       } catch (error) {
         console.error("Failed to parse admin message from WebSocket", error);
@@ -141,17 +134,6 @@ export default function PresenterPage() {
                     </Button>
                 </CardContent>
              </Card>
-             {currentQuestion && !isQuizOver && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="font-headline text-xl text-center">Current Question</CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-center">
-                        <p className="text-lg font-semibold">{currentQuestion.question_content}</p>
-                        <p className="text-sm text-muted-foreground mt-2">Correct Answer: {currentQuestion.options[currentQuestion.correct_option]}</p>
-                    </CardContent>
-                </Card>
-             )}
           </div>
           <div className="md:col-span-2">
             <Leaderboard players={leaderboard} />
