@@ -115,7 +115,7 @@ export default function PresenterPage() {
                 <CardContent className="flex justify-center">
                      <Button onClick={handleProceed} disabled={isQuizOver || !isConnected} size="lg" className="w-full font-bold">
                         {questionIndex === -1 && <><Play className="mr-2" /> Start Quiz</>}
-                        {questionIndex > -1 && !isQuizOver && <><ArrowRight className="mr-2" /> Next Question</>}
+                        {questionIndex > -1 && !isQuizOver && <><ArrowRight className="mr-2" /> Proceed</>}
                         {isQuizOver && <><CheckCircle className="mr-2" /> Quiz Finished</>}
                     </Button>
                 </CardContent>
