@@ -1,16 +1,117 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { List, Presentation, ArrowLeft } from "lucide-react";
+import { List, Presentation, ArrowLeft, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
-// Dummy data for available polls
-const availablePolls = [
-  { id: "quiz123", name: "General Knowledge Trivia", questions: 15, difficulty: "Medium" },
-  { id: "sciFiFun", name: "Science Fiction Facts", questions: 20, difficulty: "Hard" },
-  { id: "historyBuff", name: "World History Challenge", questions: 10, difficulty: "Easy" },
-];
+interface PollSummary {
+  poll_id: string;
+  name: string;
+  question_count: number;
+  difficulty: string;
+}
 
 export default function PollsPage() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [polls, setPolls] = useState<PollSummary[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchPolls() {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+      
+      try {
+        // NOTE: Make sure your backend API is running and accessible at this endpoint.
+        // This assumes the API returns an array of objects matching PollSummary.
+        const response = await fetch(`/api/polls/${user.username}`);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch polls from the server.");
+        }
+        
+        const data: PollSummary[] = await response.json();
+        setPolls(data);
+      } catch (error) {
+        console.error("Error fetching polls:", error);
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Could not fetch your polls.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchPolls();
+  }, [user, toast]);
+
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <Card>
+          <CardContent className="p-10 text-center flex items-center justify-center">
+            <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+            <p className="text-muted-foreground">Loading your polls...</p>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    if (polls.length === 0) {
+      return (
+        <Card>
+          <CardContent className="p-10 text-center">
+            <p className="text-muted-foreground">
+              You haven't created any polls yet.
+            </p>
+            <Button asChild className="mt-4">
+              <Link href="/create-quiz">Create Your First Quiz</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        {polls.map((poll) => (
+          <Card key={poll.poll_id} className="transition-all hover:shadow-md">
+            <CardContent className="p-4 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="hidden sm:block p-3 rounded-lg bg-secondary">
+                  <List className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-headline text-xl font-semibold">{poll.name}</h3>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                    <span>{poll.question_count} Questions</span>
+                    <span>&bull;</span>
+                    <span>Difficulty: {poll.difficulty}</span>
+                  </div>
+                </div>
+              </div>
+              <Button asChild>
+                <Link href={`/presenter?pollId=${poll.poll_id}`}>
+                  <Presentation className="mr-2" />
+                  Start Presenting
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <main className="min-h-screen w-full bg-gradient-to-b from-background to-secondary p-4 sm:p-8">
       <div className="absolute top-6 left-6">
@@ -35,43 +136,7 @@ export default function PollsPage() {
         </div>
 
         <div className="w-full animate-in fade-in-50 slide-in-from-bottom-10 duration-500">
-          {availablePolls.length > 0 ? (
-            <div className="space-y-4">
-              {availablePolls.map((poll) => (
-                <Card key={poll.id} className="transition-all hover:shadow-md">
-                    <CardContent className="p-4 flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <div className="hidden sm:block p-3 rounded-lg bg-secondary">
-                                <List className="w-6 h-6 text-primary" />
-                            </div>
-                            <div>
-                                <h3 className="font-headline text-xl font-semibold">{poll.name}</h3>
-                                <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                                    <span>{poll.questions} Questions</span>
-                                    <span>&bull;</span>
-                                    <span>Difficulty: {poll.difficulty}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <Button asChild>
-                            <Link href={`/presenter?pollId=${poll.id}`}>
-                                <Presentation className="mr-2" />
-                                Start Presenting
-                            </Link>
-                        </Button>
-                    </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-             <Card>
-                <CardContent className="p-10 text-center">
-                    <p className="text-muted-foreground">
-                        No active polls at the moment. Please check back later.
-                    </p>
-                </CardContent>
-             </Card>
-          )}
+          {renderContent()}
         </div>
       </div>
     </main>

@@ -8,10 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ListChecks, Presentation, UserPlus, Zap, FilePlus } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Home() {
   const [pollId, setPollId] = useState("");
   const router = useRouter();
+  const { user } = useAuth();
 
   const handleJoinGame = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,11 +58,13 @@ export default function Home() {
                 <FilePlus className="mr-2" /> Create New Quiz
               </Link>
             </Button>
-            <Button asChild size="lg" variant="secondary" className="w-full">
-              <Link href="/polls">
-                <ListChecks className="mr-2" /> View Available Polls
-              </Link>
-            </Button>
+            {user && (
+              <Button asChild size="lg" variant="secondary" className="w-full">
+                <Link href="/polls">
+                  <ListChecks className="mr-2" /> View Available Polls
+                </Link>
+              </Button>
+            )}
           </CardContent>
         </Card>
         
