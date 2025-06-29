@@ -17,7 +17,7 @@ export default function PresenterPage() {
   const [questionIndex, setQuestionIndex] = useState<number>(-1);
   const { connect, publish, subscribe, isConnected } = useWebSocket();
 
-  const isQuizOver = questionIndex >= quizQuestions.length -1;
+  const isQuizOver = questionIndex >= quizQuestions.length;
 
   // Effect to handle WebSocket connection
   useEffect(() => {
@@ -66,20 +66,12 @@ export default function PresenterPage() {
   }, [isConnected, subscribe]);
 
   const handleProceed = () => {
-    if (!isQuizOver) {
-      setLeaderboard(prev => prev.map(p => ({ ...p, change: 0 })));
-      const newIndex = questionIndex + 1;
-      setQuestionIndex(newIndex);
-      
-      const nextQuestion = quizQuestions[newIndex] ?? null;
-      publish(APP_SEND_QUESTION, JSON.stringify(nextQuestion));
-
-    } else {
-      // Handle quiz end
-      const finalIndex = quizQuestions.length;
-      setQuestionIndex(finalIndex);
-      publish(APP_SEND_QUESTION, JSON.stringify(null));
-    }
+    setLeaderboard(prev => prev.map(p => ({ ...p, change: 0 })));
+    const newIndex = questionIndex + 1;
+    setQuestionIndex(newIndex);
+    
+    const nextQuestion = quizQuestions[newIndex] ?? null;
+    publish(APP_SEND_QUESTION, JSON.stringify(nextQuestion));
   };
   
   const getStatusMessage = () => {
