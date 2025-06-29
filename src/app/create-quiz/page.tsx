@@ -13,7 +13,6 @@ import { useToast } from "@/hooks/use-toast";
 import { PlusCircle, Trash2, ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { FieldErrors } from "react-hook-form";
 
 const pollQuestionSchema = z.object({
   question_content: z.string().min(1, "Question content is required."),
@@ -33,78 +32,6 @@ const pollSchema = z.object({
 });
 
 type PollFormValues = z.infer<typeof pollSchema>;
-
-// This component handles the dynamic options for a single question
-const QuestionOptions = ({ questionIndex, control, register, errors }: {
-  questionIndex: number;
-  control: any;
-  register: any;
-  errors: FieldErrors<PollFormValues>;
-}) => {
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: `question_set.${questionIndex}.options`,
-  });
-
-  return (
-    <div className="space-y-4">
-      <Label>Options & Correct Answer</Label>
-      <Controller
-        name={`question_set.${questionIndex}.correct_option`}
-        control={control}
-        render={({ field: radioField }) => (
-          <RadioGroup
-            onValueChange={(value) => radioField.onChange(parseInt(value, 10))}
-            value={String(radioField.value)}
-            className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-2"
-          >
-            {fields.map((item, optionIndex) => (
-              <div key={item.id} className="flex items-center space-x-2">
-                <RadioGroupItem value={String(optionIndex)} id={`q${questionIndex}-opt${optionIndex}`} />
-                <div className="flex-1 flex items-center gap-2">
-                   <Input
-                    {...register(`question_set.${questionIndex}.options.${optionIndex}`)}
-                    placeholder={`Option ${optionIndex + 1}`}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="shrink-0 text-muted-foreground hover:text-destructive"
-                    onClick={() => remove(optionIndex)}
-                    disabled={fields.length <= 2}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    <span className="sr-only">Remove Option</span>
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </RadioGroup>
-        )}
-      />
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => append("")}
-      >
-        <PlusCircle className="mr-2 h-4 w-4" /> Add Option
-      </Button>
-      {errors.question_set?.[questionIndex]?.options && (
-        <p className="text-sm text-destructive mt-1">
-            {errors.question_set[questionIndex]?.options?.message || 'Each option must not be empty.'}
-        </p>
-      )}
-      {errors.question_set?.[questionIndex]?.correct_option && (
-        <p className="text-sm text-destructive mt-1">
-            {errors.question_set[questionIndex]?.correct_option?.message}
-        </p>
-      )}
-    </div>
-  );
-};
-
 
 export default function CreateQuizPage() {
   const { toast } = useToast();
@@ -206,62 +133,118 @@ export default function CreateQuizPage() {
             </CardContent>
           </Card>
 
-          {fields.map((field, index) => (
-            <Card key={field.id} className="relative pt-8">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute top-2 right-2 text-muted-foreground hover:text-destructive"
-                onClick={() => remove(index)}
-                disabled={fields.length <= 1}
-              >
-                <Trash2 className="h-4 w-4" />
-                <span className="sr-only">Remove Question</span>
-              </Button>
-              <CardHeader>
-                <CardTitle>Question {index + 1}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                 <div>
-                    <Label htmlFor={`question_set.${index}.question_content`}>Question Text</Label>
-                    <Textarea
-                      id={`question_set.${index}.question_content`}
-                      {...form.register(`question_set.${index}.question_content`)}
-                    />
-                    {form.formState.errors.question_set?.[index]?.question_content && <p className="text-sm text-destructive mt-1">{form.formState.errors.question_set?.[index]?.question_content?.message}</p>}
-                 </div>
+          {fields.map((field, index) => {
+            const { fields: optionFields, append: appendOption, remove: removeOption } = useFieldArray({
+                control: form.control,
+                name: `question_set.${index}.options`
+            });
 
-                 <QuestionOptions
-                    questionIndex={index}
-                    control={form.control}
-                    register={form.register}
-                    errors={form.formState.errors}
-                  />
-                 
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            return (
+                <Card key={field.id} className="relative pt-8">
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2 text-muted-foreground hover:text-destructive"
+                    onClick={() => remove(index)}
+                    disabled={fields.length <= 1}
+                >
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Remove Question</span>
+                </Button>
+                <CardHeader>
+                    <CardTitle>Question {index + 1}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
                     <div>
-                        <Label htmlFor={`question_set.${index}.timeInSeconds`}>Time (seconds)</Label>
-                        <Input
-                            id={`question_set.${index}.timeInSeconds`}
-                            type="number"
-                            {...form.register(`question_set.${index}.timeInSeconds`)}
+                        <Label htmlFor={`question_set.${index}.question_content`}>Question Text</Label>
+                        <Textarea
+                        id={`question_set.${index}.question_content`}
+                        {...form.register(`question_set.${index}.question_content`)}
                         />
-                         {form.formState.errors.question_set?.[index]?.timeInSeconds && <p className="text-sm text-destructive mt-1">{form.formState.errors.question_set?.[index]?.timeInSeconds?.message}</p>}
+                        {form.formState.errors.question_set?.[index]?.question_content && <p className="text-sm text-destructive mt-1">{form.formState.errors.question_set?.[index]?.question_content?.message}</p>}
                     </div>
-                    <div>
-                        <Label htmlFor={`question_set.${index}.points`}>Points</Label>
-                        <Input
-                            id={`question_set.${index}.points`}
-                            type="number"
-                            {...form.register(`question_set.${index}.points`)}
+
+                    <div className="space-y-4">
+                        <Label>Options & Correct Answer</Label>
+                        <Controller
+                            name={`question_set.${index}.correct_option`}
+                            control={form.control}
+                            render={({ field: radioField }) => (
+                            <RadioGroup
+                                onValueChange={(value) => radioField.onChange(parseInt(value, 10))}
+                                value={String(radioField.value)}
+                                className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-2"
+                            >
+                                {optionFields.map((item, optionIndex) => (
+                                <div key={item.id} className="flex items-center space-x-2">
+                                    <RadioGroupItem value={String(optionIndex)} id={`q${index}-opt${optionIndex}`} />
+                                    <div className="flex-1 flex items-center gap-2">
+                                    <Input
+                                        {...form.register(`question_set.${index}.options.${optionIndex}`)}
+                                        placeholder={`Option ${optionIndex + 1}`}
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="shrink-0 text-muted-foreground hover:text-destructive"
+                                        onClick={() => removeOption(optionIndex)}
+                                        disabled={optionFields.length <= 2}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                        <span className="sr-only">Remove Option</span>
+                                    </Button>
+                                    </div>
+                                </div>
+                                ))}
+                            </RadioGroup>
+                            )}
                         />
-                        {form.formState.errors.question_set?.[index]?.points && <p className="text-sm text-destructive mt-1">{form.formState.errors.question_set?.[index]?.points?.message}</p>}
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => appendOption("")}
+                        >
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add Option
+                        </Button>
+                        {form.formState.errors.question_set?.[index]?.options && (
+                            <p className="text-sm text-destructive mt-1">
+                                {form.formState.errors.question_set[index]?.options?.message || 'Each option must not be empty.'}
+                            </p>
+                        )}
+                        {form.formState.errors.question_set?.[index]?.correct_option && (
+                            <p className="text-sm text-destructive mt-1">
+                                {form.formState.errors.question_set[index]?.correct_option?.message}
+                            </p>
+                        )}
                     </div>
-                 </div>
-              </CardContent>
-            </Card>
-          ))}
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <Label htmlFor={`question_set.${index}.timeInSeconds`}>Time (seconds)</Label>
+                            <Input
+                                id={`question_set.${index}.timeInSeconds`}
+                                type="number"
+                                {...form.register(`question_set.${index}.timeInSeconds`)}
+                            />
+                            {form.formState.errors.question_set?.[index]?.timeInSeconds && <p className="text-sm text-destructive mt-1">{form.formState.errors.question_set?.[index]?.timeInSeconds?.message}</p>}
+                        </div>
+                        <div>
+                            <Label htmlFor={`question_set.${index}.points`}>Points</Label>
+                            <Input
+                                id={`question_set.${index}.points`}
+                                type="number"
+                                {...form.register(`question_set.${index}.points`)}
+                            />
+                            {form.formState.errors.question_set?.[index]?.points && <p className="text-sm text-destructive mt-1">{form.formState.errors.question_set?.[index]?.points?.message}</p>}
+                        </div>
+                    </div>
+                </CardContent>
+                </Card>
+            );
+          })}
           
           <div className="flex justify-between items-center">
              <Button
