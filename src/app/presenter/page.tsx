@@ -9,8 +9,10 @@ import { ArrowRight, Play, CheckCircle, Wifi, WifiOff } from "lucide-react";
 import Link from "next/link";
 import { useWebSocket } from "@/hooks/use-websocket";
 
-const TOPIC_ANSWER = "/topic/quiz/answer";
-const APP_SEND_QUESTION = "/app/quiz/question";
+const pollId = "quiz123"; // Dummy poll ID
+const TOPIC_ANSWER = `/topic/admin/${pollId}`;
+const TOPIC_QUESTION_BROADCAST = `/topic/quiz/question/${pollId}`;
+const APP_SEND_QUESTION = `/app/quiz/question/${pollId}`;
 
 export default function PresenterPage() {
   const [leaderboard, setLeaderboard] = useState<Player[]>(initialPlayers);
@@ -28,7 +30,7 @@ export default function PresenterPage() {
   useEffect(() => {
     if (!isConnected) return;
 
-    const subscription = subscribe(TOPIC_ANSWER, (message) => {
+    const answerSub = subscribe(TOPIC_ANSWER, (message) => {
       if (message.body) {
         try {
           const leaderboardData: { scoreboard: { user_name: string; score: number }[] } = JSON.parse(message.body);
@@ -59,9 +61,14 @@ export default function PresenterPage() {
       }
     });
 
-    // Cleanup subscription on component unmount
+    const questionSub = subscribe(TOPIC_QUESTION_BROADCAST, (message) => {
+      console.log("Presenter received question broadcast confirmation:", message.body);
+    });
+
+    // Cleanup subscriptions on component unmount
     return () => {
-        subscription?.unsubscribe();
+        answerSub?.unsubscribe();
+        questionSub?.unsubscribe();
     }
   }, [isConnected, subscribe]);
 

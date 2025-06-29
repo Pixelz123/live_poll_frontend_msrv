@@ -9,8 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { Wifi, WifiOff } from "lucide-react";
 
-const TOPIC_QUESTION = "/topic/quiz/question";
-const APP_SEND_ANSWER = "/app/quiz/answer";
+const pollId = "quiz123"; // Dummy poll ID
+const TOPIC_QUESTION = `/topic/quiz/question/${pollId}`;
+const APP_SEND_ANSWER = `/app/quiz/answer/${pollId}`;
 
 export default function PlayerPage() {
   const [currentQuestion, setCurrentQuestion] = useState<PollQuestionEntity | null>(null);
