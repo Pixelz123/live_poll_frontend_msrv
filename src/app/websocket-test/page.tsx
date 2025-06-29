@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 
-const SOCKET_URL = 'http://localhost:8080/ws'; // TODO: Replace with your SockJS endpoint
+const SOCKET_URL = '/ws';
 
 export default function WebSocketTestPage() {
     const [stompClient, setStompClient] = useState<Client | null>(null);
@@ -90,7 +90,7 @@ export default function WebSocketTestPage() {
                     <CardTitle>WebSocket (SockJS + STOMP) Test</CardTitle>
                     <CardDescription>
                         Connect to a WebSocket server, subscribe to a topic, and send messages.
-                        Make sure your STOMP over SockJS server is running at {SOCKET_URL}.
+                        Your STOMP over SockJS server should be accessible at {SOCKET_URL} on the same host.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">

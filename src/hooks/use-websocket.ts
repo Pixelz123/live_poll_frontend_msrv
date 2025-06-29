@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Client, type IMessage, type IFrame, type StompSubscription } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 
-const SOCKET_URL = 'http://localhost:8080/ws';
+const SOCKET_URL = '/ws';
 
 interface UseWebSocketOptions {
   onConnect?: (frame: IFrame) => void;
