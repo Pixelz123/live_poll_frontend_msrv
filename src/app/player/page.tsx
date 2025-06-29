@@ -60,15 +60,12 @@ export default function PlayerPage() {
         return;
     }
 
-    const isCorrect = selectedOption === currentQuestion.correct_option;
-    const points = isCorrect ? currentQuestion.points : 0;
-
+    // The server should be responsible for validating the answer and calculating points.
     const userResponse = {
         user_id: playerId,
         poll_id: pollId,
         index: currentQuestion.question_number,
         response: selectedOption ?? -1, // Send -1 if no option was selected
-        points: points,
     };
 
     publish(APP_SEND_ANSWER, JSON.stringify(userResponse));
