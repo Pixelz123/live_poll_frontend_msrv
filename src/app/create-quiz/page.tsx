@@ -13,13 +13,17 @@ import { useToast } from "@/hooks/use-toast";
 import { PlusCircle, Trash2, ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import type { FieldErrors } from "react-hook-form";
 
 const pollQuestionSchema = z.object({
   question_content: z.string().min(1, "Question content is required."),
-  options: z.array(z.string().min(1, "Option cannot be empty.")).length(4, "There must be exactly 4 options."),
+  options: z.array(z.string().min(1, "Option cannot be empty.")).min(2, "At least 2 options are required."),
   timeInSeconds: z.coerce.number().int().min(5, "Time must be at least 5 seconds."),
-  correct_option: z.coerce.number().int().min(0).max(3),
+  correct_option: z.coerce.number().int().min(0, "A correct option must be selected."),
   points: z.coerce.number().min(0, "Points cannot be negative."),
+}).refine(data => data.correct_option < data.options.length, {
+    message: "Selected correct option is out of bounds.",
+    path: ["correct_option"],
 });
 
 const pollSchema = z.object({
@@ -29,6 +33,78 @@ const pollSchema = z.object({
 });
 
 type PollFormValues = z.infer<typeof pollSchema>;
+
+// This component handles the dynamic options for a single question
+const QuestionOptions = ({ questionIndex, control, register, errors }: {
+  questionIndex: number;
+  control: any;
+  register: any;
+  errors: FieldErrors<PollFormValues>;
+}) => {
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: `question_set.${questionIndex}.options`,
+  });
+
+  return (
+    <div className="space-y-4">
+      <Label>Options & Correct Answer</Label>
+      <Controller
+        name={`question_set.${questionIndex}.correct_option`}
+        control={control}
+        render={({ field: radioField }) => (
+          <RadioGroup
+            onValueChange={(value) => radioField.onChange(parseInt(value, 10))}
+            value={String(radioField.value)}
+            className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-2"
+          >
+            {fields.map((item, optionIndex) => (
+              <div key={item.id} className="flex items-center space-x-2">
+                <RadioGroupItem value={String(optionIndex)} id={`q${questionIndex}-opt${optionIndex}`} />
+                <div className="flex-1 flex items-center gap-2">
+                   <Input
+                    {...register(`question_set.${questionIndex}.options.${optionIndex}`)}
+                    placeholder={`Option ${optionIndex + 1}`}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => remove(optionIndex)}
+                    disabled={fields.length <= 2}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Remove Option</span>
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </RadioGroup>
+        )}
+      />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => append("")}
+      >
+        <PlusCircle className="mr-2 h-4 w-4" /> Add Option
+      </Button>
+      {errors.question_set?.[questionIndex]?.options && (
+        <p className="text-sm text-destructive mt-1">
+            {errors.question_set[questionIndex]?.options?.message || 'Each option must not be empty.'}
+        </p>
+      )}
+      {errors.question_set?.[questionIndex]?.correct_option && (
+        <p className="text-sm text-destructive mt-1">
+            {errors.question_set[questionIndex]?.correct_option?.message}
+        </p>
+      )}
+    </div>
+  );
+};
+
 
 export default function CreateQuizPage() {
   const { toast } = useToast();
@@ -41,7 +117,7 @@ export default function CreateQuizPage() {
       question_set: [
         {
           question_content: "",
-          options: ["", "", "", ""],
+          options: ["", ""],
           timeInSeconds: 30,
           correct_option: 0,
           points: 100,
@@ -156,33 +232,12 @@ export default function CreateQuizPage() {
                     {form.formState.errors.question_set?.[index]?.question_content && <p className="text-sm text-destructive mt-1">{form.formState.errors.question_set?.[index]?.question_content?.message}</p>}
                  </div>
 
-                 <div className="space-y-2">
-                    <Label>Options & Correct Answer</Label>
-                    <Controller
-                        name={`question_set.${index}.correct_option`}
-                        control={form.control}
-                        render={({ field: radioField }) => (
-                            <RadioGroup
-                                onValueChange={(value) => radioField.onChange(parseInt(value, 10))}
-                                value={String(radioField.value)}
-                                className="grid grid-cols-1 sm:grid-cols-2 gap-4"
-                            >
-                                {Array.from({ length: 4 }).map((_, optionIndex) => (
-                                    <div key={optionIndex} className="flex items-center space-x-2">
-                                        <RadioGroupItem value={String(optionIndex)} id={`q${index}-opt${optionIndex}`} />
-                                        <Input
-                                            id={`question_set.${index}.options.${optionIndex}`}
-                                            {...form.register(`question_set.${index}.options.${optionIndex}`)}
-                                            placeholder={`Option ${optionIndex + 1}`}
-                                        />
-                                    </div>
-                                ))}
-                            </RadioGroup>
-                        )}
-                    />
-                     {form.formState.errors.question_set?.[index]?.options && <p className="text-sm text-destructive mt-1">All 4 options are required.</p>}
-                     {form.formState.errors.question_set?.[index]?.correct_option && <p className="text-sm text-destructive mt-1">{form.formState.errors.question_set?.[index]?.correct_option?.message}</p>}
-                 </div>
+                 <QuestionOptions
+                    questionIndex={index}
+                    control={form.control}
+                    register={form.register}
+                    errors={form.formState.errors}
+                  />
                  
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -215,7 +270,7 @@ export default function CreateQuizPage() {
                 onClick={() =>
                   append({
                     question_content: "",
-                    options: ["", "", "", ""],
+                    options: ["", ""],
                     timeInSeconds: 30,
                     correct_option: 0,
                     points: 100,
