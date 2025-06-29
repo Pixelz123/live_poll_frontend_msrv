@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,7 @@ export default function PollsPage() {
           Available Polls
         </h1>
         <p className="text-muted-foreground mt-2 text-lg">
-          Choose a quiz to join.
+          Choose a quiz to present.
         </p>
       </div>
 
@@ -28,7 +29,7 @@ export default function PollsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <List className="w-6 h-6" />
-              <span>Active Quizzes</span>
+              <span>Available Quizzes</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -38,7 +39,7 @@ export default function PollsPage() {
                   <li key={poll.id} className="flex items-center justify-between p-4 bg-secondary rounded-lg">
                     <span className="font-medium">{poll.name}</span>
                     <Button asChild>
-                      <Link href={`/player?pollId=${poll.id}`}>Join</Link>
+                      <Link href={`/presenter?pollId=${poll.id}`}>Start Presenting</Link>
                     </Button>
                   </li>
                 ))}

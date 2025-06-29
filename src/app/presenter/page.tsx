@@ -1,20 +1,24 @@
+
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Leaderboard } from "@/components/presenter/Leaderboard";
 import { initialPlayers, type Player } from "@/lib/quiz-data";
-import { ArrowRight, Play, CheckCircle, Wifi, WifiOff } from "lucide-react";
+import { ArrowRight, Play, CheckCircle, Wifi, WifiOff, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useWebSocket } from "@/hooks/use-websocket";
 
-const pollId = "quiz123"; // Dummy poll ID
-const TOPIC_ADMIN = `/topic/admin/${pollId}`;
-const APP_START_QUIZ = `/app/start_request/${pollId}`;
-const APP_PROCEED_QUIZ = `/app/proceed/${pollId}`;
+function PresenterPageContent() {
+  const searchParams = useSearchParams();
+  const pollId = searchParams.get("pollId");
 
-export default function PresenterPage() {
+  const TOPIC_ADMIN = pollId ? `/topic/admin/${pollId}` : '';
+  const APP_START_QUIZ = pollId ? `/app/start_request/${pollId}` : '';
+  const APP_PROCEED_QUIZ = pollId ? `/app/proceed/${pollId}` : '';
+
   const [leaderboard, setLeaderboard] = useState<Player[]>(initialPlayers);
   const [questionCount, setQuestionCount] = useState<number>(0);
   const [isQuizStarted, setIsQuizStarted] = useState<boolean>(false);
@@ -23,12 +27,14 @@ export default function PresenterPage() {
 
   // Effect to handle WebSocket connection
   useEffect(() => {
-    connect();
-  }, [connect]);
+    if (pollId) {
+      connect();
+    }
+  }, [connect, pollId]);
 
   // Effect to handle subscriptions
   useEffect(() => {
-    if (!isConnected) return;
+    if (!isConnected || !pollId) return;
 
     // This one subscription handles all messages for the presenter from the server
     const adminSub = subscribe(TOPIC_ADMIN, (message) => {
@@ -82,9 +88,10 @@ export default function PresenterPage() {
     return () => {
         adminSub?.unsubscribe();
     }
-  }, [isConnected, subscribe]);
+  }, [isConnected, subscribe, pollId, TOPIC_ADMIN]);
 
   const handleProceed = () => {
+    if (!pollId) return;
     setLeaderboard(prev => prev.map(p => ({ ...p, change: 0 })));
     if (!isQuizStarted) {
       publish(APP_START_QUIZ, JSON.stringify({}));
@@ -101,6 +108,21 @@ export default function PresenterPage() {
       return "The quiz has not started yet.";
     }
     return `Displaying Question ${questionCount}`;
+  }
+
+  if (!pollId) {
+      return (
+          <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 text-center">
+               <Link href="/" className="absolute top-4 left-4 text-primary hover:underline">
+                    &larr; Back to Home
+                </Link>
+              <h2 className="font-headline text-2xl text-destructive">No Poll ID Provided</h2>
+              <p className="text-muted-foreground mt-2">Please select a poll from the available polls list.</p>
+              <Button asChild className="mt-4">
+                  <Link href="/polls">View Available Polls</Link>
+              </Button>
+          </div>
+      )
   }
 
   return (
@@ -122,6 +144,7 @@ export default function PresenterPage() {
       <div className="w-full max-w-4xl mx-auto">
         <header className="text-center mb-8">
           <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary">Presenter Dashboard</h1>
+          <p className="text-muted-foreground text-sm">Quiz ID: {pollId}</p>
           <p className="text-muted-foreground mt-2 text-lg">{getStatusMessage()}</p>
         </header>
         
@@ -147,4 +170,21 @@ export default function PresenterPage() {
       </div>
     </div>
   );
+}
+
+function LoadingFallback() {
+    return (
+        <div className="min-h-screen bg-background flex flex-col items-center justify-center">
+            <Loader2 className="w-16 h-16 text-primary animate-spin" />
+            <p className="text-muted-foreground mt-4">Loading Dashboard...</p>
+        </div>
+    )
+}
+
+export default function PresenterPage() {
+    return (
+        <Suspense fallback={<LoadingFallback />}>
+            <PresenterPageContent />
+        </Suspense>
+    )
 }
