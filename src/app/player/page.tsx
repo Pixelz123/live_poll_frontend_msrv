@@ -24,6 +24,7 @@ function PlayerPageContent() {
   const { connect, publish, subscribe, isConnected } = useWebSocket();
 
   useEffect(() => {
+    // Generate player ID only on the client to avoid hydration mismatch
     setPlayerId(`player_${Math.random().toString(36).substr(2, 9)}`);
   }, []);
 
@@ -91,9 +92,9 @@ function PlayerPageContent() {
                     &larr; Back to Home
                 </Link>
               <h2 className="font-headline text-2xl text-destructive">No Poll ID Provided</h2>
-              <p className="text-muted-foreground mt-2">Please go to the join page and enter a Poll ID.</p>
+              <p className="text-muted-foreground mt-2">Please go back to the home page and enter a Poll ID to join a game.</p>
               <Button asChild className="mt-4">
-                  <Link href="/join">Join a Game</Link>
+                  <Link href="/">Go to Home</Link>
               </Button>
           </div>
       )
