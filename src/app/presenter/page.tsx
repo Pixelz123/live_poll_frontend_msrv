@@ -5,61 +5,69 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Leaderboard } from "@/components/presenter/Leaderboard";
 import { initialPlayers, quizQuestions, type Player } from "@/lib/quiz-data";
-import { ArrowRight, Play, CheckCircle } from "lucide-react";
+import { ArrowRight, Play, CheckCircle, Wifi, WifiOff } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { useWebSocket } from "@/hooks/use-websocket";
+
+const TOPIC_ANSWER = "/topic/quiz/answer";
+const APP_SEND_QUESTION = "/app/quiz/question";
 
 export default function PresenterPage() {
   const [leaderboard, setLeaderboard] = useState<Player[]>(initialPlayers);
   const [questionIndex, setQuestionIndex] = useState<number>(-1);
   const { toast } = useToast();
+  const { connect, publish, subscribe, isConnected, client } = useWebSocket();
 
   const isQuizOver = questionIndex >= quizQuestions.length -1;
 
-  // Effect to broadcast the current question via localStorage
+  // Effect to handle WebSocket connection and subscriptions
   useEffect(() => {
-    if (questionIndex >= 0 && questionIndex < quizQuestions.length) {
-      const currentQuestion = quizQuestions[questionIndex];
-      localStorage.setItem("quizwhiz-question", JSON.stringify(currentQuestion));
-    } else {
-      localStorage.removeItem("quizwhiz-question");
-    }
-  }, [questionIndex]);
+    connect();
 
-  // Effect to listen for player answers from localStorage
-  useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === "quizwhiz-answer" && event.newValue) {
-        try {
-          const { playerId, isCorrect } = JSON.parse(event.newValue);
+    const subscription = subscribe(TOPIC_ANSWER, (message) => {
+      if (message.body) {
+         try {
+          const { playerId, isCorrect } = JSON.parse(message.body);
           const currentQuestion = quizQuestions[questionIndex];
 
-          if (isCorrect) {
+          if (isCorrect && currentQuestion) {
             setLeaderboard(prev => {
                 const points = currentQuestion.points;
+                const player = prev.find(p => p.id === playerId);
                 toast({
-                    title: `Correct answer from a player!`,
+                    title: `Correct answer from ${player?.name || 'a player'}!`,
                     description: `+${points} points awarded.`,
                 });
                 return prev.map(p => p.id === playerId ? { ...p, score: p.score + points, change: points } : {...p, change: 0});
             });
           }
         } catch (error) {
-          console.error("Failed to parse answer from storage", error);
+          console.error("Failed to parse answer from WebSocket", error);
         }
       }
-    };
+    });
 
-    window.addEventListener("storage", handleStorageChange);
+    // Cleanup subscription on component unmount or when client changes
     return () => {
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, [questionIndex, toast]);
+        subscription?.unsubscribe();
+    }
+  }, [client, connect, subscribe, toast, questionIndex]);
 
   const handleProceed = () => {
     if (!isQuizOver) {
       setLeaderboard(prev => prev.map(p => ({ ...p, change: 0 })));
-      setQuestionIndex(prev => prev + 1);
+      const newIndex = questionIndex + 1;
+      setQuestionIndex(newIndex);
+      
+      const nextQuestion = quizQuestions[newIndex] ?? null;
+      publish(APP_SEND_QUESTION, JSON.stringify(nextQuestion));
+
+    } else {
+      // Handle quiz end
+      const finalIndex = quizQuestions.length;
+      setQuestionIndex(finalIndex);
+      publish(APP_SEND_QUESTION, JSON.stringify(null));
     }
   };
   
@@ -78,6 +86,17 @@ export default function PresenterPage() {
       <Link href="/" className="absolute top-4 left-4 text-primary hover:underline">
         &larr; Back to Home
       </Link>
+       <div className="absolute top-4 right-4 flex items-center gap-2">
+        {isConnected ? (
+          <span className="text-green-600 flex items-center gap-1">
+            <Wifi className="w-4 h-4" /> Connected
+          </span>
+        ) : (
+          <span className="text-red-600 flex items-center gap-1">
+            <WifiOff className="w-4 h-4" /> Disconnected
+          </span>
+        )}
+      </div>
       <div className="w-full max-w-4xl mx-auto">
         <header className="text-center mb-8">
           <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary">Presenter Dashboard</h1>
@@ -91,7 +110,7 @@ export default function PresenterPage() {
                     <CardTitle className="font-headline text-2xl text-center">Controls</CardTitle>
                 </CardHeader>
                 <CardContent className="flex justify-center">
-                     <Button onClick={handleProceed} disabled={isQuizOver} size="lg" className="w-full font-bold">
+                     <Button onClick={handleProceed} disabled={isQuizOver || !isConnected} size="lg" className="w-full font-bold">
                         {questionIndex === -1 && <><Play className="mr-2" /> Start Quiz</>}
                         {questionIndex > -1 && !isQuizOver && <><ArrowRight className="mr-2" /> Next Question</>}
                         {isQuizOver && <><CheckCircle className="mr-2" /> Quiz Finished</>}

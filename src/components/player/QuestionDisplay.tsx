@@ -11,9 +11,10 @@ import { cn } from "@/lib/utils";
 interface QuestionDisplayProps {
   question: PollQuestionEntity;
   onAnswer: (isCorrect: boolean) => void;
+  isOnline: boolean;
 }
 
-export function QuestionDisplay({ question, onAnswer }: QuestionDisplayProps) {
+export function QuestionDisplay({ question, onAnswer, isOnline }: QuestionDisplayProps) {
   const [timeLeft, setTimeLeft] = useState(question.timeInSeconds);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
@@ -34,6 +35,7 @@ export function QuestionDisplay({ question, onAnswer }: QuestionDisplayProps) {
     if (timeLeft === 0 && !answerSubmitted) {
       handleSubmit();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft, answerSubmitted]);
 
   const handleSubmit = () => {
@@ -45,15 +47,6 @@ export function QuestionDisplay({ question, onAnswer }: QuestionDisplayProps) {
 
   const progressValue = (timeLeft / question.timeInSeconds) * 100;
   
-  const getButtonVariant = (index: number) => {
-    if (!answerSubmitted) {
-      return selectedOption === index ? "default" : "outline";
-    }
-    if (index === question.correct_option) return "success";
-    if (index === selectedOption) return "destructive";
-    return "outline";
-  }
-
   const getButtonIcon = (index: number) => {
     if (!answerSubmitted) return null;
     if (index === question.correct_option) return <Check className="w-5 h-5 mr-2" />;
@@ -78,7 +71,7 @@ export function QuestionDisplay({ question, onAnswer }: QuestionDisplayProps) {
             <Button
               key={index}
               onClick={() => setSelectedOption(index)}
-              disabled={answerSubmitted}
+              disabled={answerSubmitted || !isOnline}
               className={cn("text-lg h-auto py-4 whitespace-normal justify-start transition-all duration-300", 
                 selectedOption === index && !answerSubmitted ? "bg-accent/80 text-accent-foreground" : "",
                 answerSubmitted && index === question.correct_option ? "bg-green-500 hover:bg-green-600 text-white" : "",
@@ -93,7 +86,7 @@ export function QuestionDisplay({ question, onAnswer }: QuestionDisplayProps) {
           ))}
         </div>
         <div className="mt-8 flex justify-center">
-          <Button onClick={handleSubmit} disabled={answerSubmitted || selectedOption === null} size="lg" className="font-bold w-1/2">
+          <Button onClick={handleSubmit} disabled={answerSubmitted || selectedOption === null || !isOnline} size="lg" className="font-bold w-1/2">
             {answerSubmitted ? "Waiting for Next Question..." : "Submit Answer"}
           </Button>
         </div>

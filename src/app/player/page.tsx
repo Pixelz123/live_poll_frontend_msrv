@@ -6,59 +6,77 @@ import { WaitingScreen } from "@/components/player/WaitingScreen";
 import { QuestionDisplay } from "@/components/player/QuestionDisplay";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { useWebSocket } from "@/hooks/use-websocket";
+import { Wifi, WifiOff } from "lucide-react";
+
+const TOPIC_QUESTION = "/topic/quiz/question";
+const APP_SEND_ANSWER = "/app/quiz/answer";
 
 export default function PlayerPage() {
   const [currentQuestion, setCurrentQuestion] = useState<PollQuestionEntity | null>(null);
   const [playerId] = useState(() => `player_${Math.random().toString(36).substr(2, 9)}`);
   const { toast } = useToast();
+  const { connect, publish, subscribe, isConnected, client } = useWebSocket();
 
+  // Effect to handle WebSocket connection and subscriptions
   useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === "quizwhiz-question") {
-        if (event.newValue) {
-          try {
-            const question = JSON.parse(event.newValue);
-            setCurrentQuestion(question);
-          } catch (error) {
-            console.error("Failed to parse question from storage", error);
-            setCurrentQuestion(null);
-          }
-        } else {
-            setCurrentQuestion(null);
-        }
-      }
-    };
-    
-    // Check initial state
-    const initialQuestion = localStorage.getItem("quizwhiz-question");
-    if(initialQuestion) {
-        handleStorageChange({key: "quizwhiz-question", newValue: initialQuestion} as StorageEvent);
-    }
+    connect();
 
-    window.addEventListener("storage", handleStorageChange);
+    const subscription = subscribe(TOPIC_QUESTION, (message) => {
+      if (message.body) {
+        try {
+          const question = JSON.parse(message.body);
+          setCurrentQuestion(question);
+        } catch (error) {
+          console.error("Failed to parse question from WebSocket", error);
+          setCurrentQuestion(null);
+        }
+      } else {
+        setCurrentQuestion(null);
+      }
+    });
+    
+    // Cleanup subscription on component unmount or when client changes
     return () => {
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, []);
+        subscription?.unsubscribe();
+    }
+  }, [client, connect, subscribe]);
 
   const handleAnswerSubmit = useCallback((isCorrect: boolean) => {
-    localStorage.setItem(
-      "quizwhiz-answer",
-      JSON.stringify({ playerId, isCorrect })
-    );
+    if (!isConnected) {
+        toast({
+            title: "Connection Error",
+            description: "Cannot submit answer, not connected to the server.",
+            variant: "destructive",
+        });
+        return;
+    }
+
+    publish(APP_SEND_ANSWER, JSON.stringify({ playerId, isCorrect }));
+    
     toast({
-        title: isCorrect ? "Correct!" : "Incorrect!",
-        description: isCorrect ? "Great job! Points will be added." : "Better luck on the next one.",
-        variant: isCorrect ? "default" : "destructive",
-        className: isCorrect ? "bg-green-500 border-green-500 text-white" : ""
+        title: "Answer Submitted!",
+        description: "Waiting for the next question.",
+        variant: "default",
     });
-  }, [playerId, toast]);
+  }, [playerId, toast, publish, isConnected]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
       <Link href="/" className="absolute top-4 left-4 text-primary hover:underline">
         &larr; Back to Home
       </Link>
+      <div className="absolute top-4 right-4 flex items-center gap-2">
+        {isConnected ? (
+          <span className="text-green-600 flex items-center gap-1">
+            <Wifi className="w-4 h-4" /> Connected
+          </span>
+        ) : (
+          <span className="text-red-600 flex items-center gap-1">
+            <WifiOff className="w-4 h-4" /> Disconnected
+          </span>
+        )}
+      </div>
       <header className="text-center mb-8">
         <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary">Player View</h1>
       </header>
@@ -68,9 +86,10 @@ export default function PlayerPage() {
             key={currentQuestion.question_id} 
             question={currentQuestion}
             onAnswer={handleAnswerSubmit}
+            isOnline={isConnected}
         />
       ) : (
-        <WaitingScreen />
+        <WaitingScreen isOnline={isConnected} />
       )}
     </div>
   );
