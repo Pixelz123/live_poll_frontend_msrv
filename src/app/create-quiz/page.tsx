@@ -14,6 +14,7 @@ import { PlusCircle, Trash2, ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import React from "react";
 
 const pollQuestionSchema = z.object({
   question_content: z.string().min(1, "Question content is required."),
@@ -27,7 +28,7 @@ const pollQuestionSchema = z.object({
 });
 
 const pollSchema = z.object({
-  poll_id: z.string().min(3, "Poll ID must be at least 3 characters long."),
+  poll_id: z.string().optional(),
   username: z.string().min(1, "Username is required."),
   question_set: z.array(pollQuestionSchema).min(1, "At least one question is required."),
 });
@@ -205,9 +206,12 @@ export default function CreateQuizPage() {
         });
         return;
     }
+    
+    const generatedPollId = Math.floor(10000000 + Math.random() * 90000000).toString();
 
     const payload = {
       ...data,
+      poll_id: generatedPollId,
       status: true,
       username: user.username,
       question_set: data.question_set.map(q => ({
@@ -276,12 +280,7 @@ export default function CreateQuizPage() {
               <CardDescription>Fill in the details for your poll and add your questions.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="poll_id">Poll ID</Label>
-                  <Input id="poll_id" {...form.register("poll_id")} />
-                  {form.formState.errors.poll_id && <p className="text-sm text-destructive mt-1">{form.formState.errors.poll_id.message}</p>}
-                </div>
+              <div className="grid grid-cols-1">
                 <div>
                   <Label htmlFor="username">Your Name (Presenter)</Label>
                   <Input id="username" {...form.register("username")} disabled />
