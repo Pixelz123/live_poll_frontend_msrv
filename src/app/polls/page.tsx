@@ -9,7 +9,7 @@ import { List, Presentation, ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface PollSummary {
-  poll_id: string;
+  _id: string;
   poll_name: string;
 }
 
@@ -85,7 +85,7 @@ export default function PollsPage() {
     return (
       <div className="space-y-4">
         {polls.map((poll) => (
-          <Card key={poll.poll_id} className="transition-all hover:shadow-md">
+          <Card key={poll._id} className="transition-all hover:shadow-md">
             <CardContent className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="hidden sm:block p-3 rounded-lg bg-secondary">
@@ -93,11 +93,11 @@ export default function PollsPage() {
                 </div>
                 <div>
                   <h3 className="font-headline text-xl font-semibold">{poll.poll_name}</h3>
-                  <p className="text-sm text-muted-foreground mt-1">ID: {poll.poll_id}</p>
+                  <p className="text-sm text-muted-foreground mt-1">ID: {poll._id}</p>
                 </div>
               </div>
               <Button asChild>
-                <Link href={`/presenter?pollId=${poll.poll_id}`}>
+                <Link href={`/presenter?pollId=${poll._id}`}>
                   <Presentation className="mr-2" />
                   Start Presenting
                 </Link>
