@@ -29,6 +29,7 @@ const pollQuestionSchema = z.object({
 
 const pollSchema = z.object({
   poll_id: z.string().min(1, "Poll ID is required."),
+  poll_name: z.string().min(1, "Poll name is required."),
   username: z.string().min(1, "Username is required."),
   question_set: z.array(pollQuestionSchema).min(1, "At least one question is required."),
 });
@@ -180,6 +181,7 @@ export default function CreateQuizPage() {
     resolver: zodResolver(pollSchema),
     defaultValues: {
       poll_id: "",
+      poll_name: "",
       username: user?.username || "",
       question_set: [
         {
@@ -237,7 +239,7 @@ export default function CreateQuizPage() {
 
       toast({
         title: "Quiz Saved!",
-        description: `Quiz with ID ${data.poll_id} has been created.`,
+        description: `Quiz "${data.poll_name}" has been created.`,
       });
       router.push('/polls');
 
@@ -282,9 +284,9 @@ export default function CreateQuizPage() {
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="username">Your Name (Presenter)</Label>
-                  <Input id="username" {...form.register("username")} disabled />
-                   {form.formState.errors.username && <p className="text-sm text-destructive mt-1">{form.formState.errors.username.message}</p>}
+                  <Label htmlFor="poll_name">Poll Name</Label>
+                  <Input id="poll_name" {...form.register("poll_name")} placeholder="My Awesome Quiz" />
+                   {form.formState.errors.poll_name && <p className="text-sm text-destructive mt-1">{form.formState.errors.poll_name.message}</p>}
                 </div>
                  <div>
                   <Label htmlFor="poll_id">Poll ID</Label>

@@ -44,7 +44,7 @@ export default function PollsPage() {
         // This transformation logic can be adjusted based on the actual API response
         const formattedPolls: PollSummary[] = data.map((poll: any) => ({
             poll_id: poll.poll_id,
-            name: poll.poll_id, // Or another field if the name is available
+            name: poll.poll_name || poll.poll_id,
             question_count: poll.question_set.length,
             difficulty: "Medium" // Placeholder, as this isn't in the backend model
         }));
