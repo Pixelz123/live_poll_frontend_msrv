@@ -8,9 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { PlusCircle, Trash2, ArrowLeft, Save, Presentation, CheckCircle } from "lucide-react";
+import { PlusCircle, Trash2, ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,7 +28,7 @@ const pollQuestionSchema = z.object({
 });
 
 const pollSchema = z.object({
-  poll_id: z.string().optional(),
+  poll_id: z.string().min(1, "Poll ID is required."),
   username: z.string().min(1, "Username is required."),
   question_set: z.array(pollQuestionSchema).min(1, "At least one question is required."),
 });
@@ -174,7 +174,7 @@ const QuestionItem = ({
 export default function CreateQuizPage() {
   const { toast } = useToast();
   const { user } = useAuth();
-  const [createdPollId, setCreatedPollId] = React.useState<string | null>(null);
+  const router = useRouter();
 
   const form = useForm<PollFormValues>({
     resolver: zodResolver(pollSchema),
@@ -207,12 +207,9 @@ export default function CreateQuizPage() {
         });
         return;
     }
-    
-    const generatedPollId = Math.floor(10000000 + Math.random() * 90000000).toString();
 
     const payload = {
       ...data,
-      poll_id: generatedPollId,
       status: true,
       username: user.username,
       question_set: data.question_set.map(q => ({
@@ -238,7 +235,12 @@ export default function CreateQuizPage() {
         throw new Error(errorData.message || 'Failed to save quiz.');
       }
 
-      setCreatedPollId(generatedPollId);
+      toast({
+        title: "Quiz Saved!",
+        description: `Quiz with ID ${data.poll_id} has been created.`,
+      });
+      router.push('/polls');
+
     } catch (error) {
       console.error(error);
       toast({
@@ -250,56 +252,14 @@ export default function CreateQuizPage() {
   };
   
   React.useEffect(() => {
+    if (!form.getValues("poll_id")) {
+        const generatedPollId = Math.floor(10000000 + Math.random() * 90000000).toString();
+        form.setValue("poll_id", generatedPollId);
+    }
     if (user?.username) {
         form.setValue("username", user.username);
     }
   }, [user, form]);
-
-  if (createdPollId) {
-    return (
-      <main className="min-h-screen w-full bg-gradient-to-b from-background to-secondary p-4 sm:p-8 flex items-center justify-center">
-        <Card className="w-full max-w-lg text-center animate-in fade-in-50 zoom-in-95 duration-500">
-          <CardHeader>
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <CheckCircle className="w-8 h-8" />
-            </div>
-            <CardTitle className="font-headline text-4xl">Quiz Created!</CardTitle>
-            <CardDescription>Your quiz has been saved and is ready to be presented.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-                <Label className="text-muted-foreground">Your new Poll ID</Label>
-                <div className="mt-2 text-4xl font-bold font-mono tracking-widest bg-muted text-muted-foreground p-4 rounded-lg">
-                    {createdPollId}
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">Players can use this ID to join the quiz.</p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button asChild size="lg" className="w-full">
-                <Link href={`/presenter?pollId=${createdPollId}`}>
-                  <Presentation className="mr-2" /> Start Presenting
-                </Link>
-              </Button>
-              <Button variant="outline" size="lg" className="w-full" onClick={() => {
-                  form.reset();
-                  setCreatedPollId(null);
-              }}>
-                  <PlusCircle className="mr-2" /> Create Another
-              </Button>
-            </div>
-          </CardContent>
-           <CardFooter className="flex justify-center">
-            <Button asChild variant="link" className="text-muted-foreground">
-              <Link href="/polls">
-                View All Polls &rarr;
-              </Link>
-            </Button>
-          </CardFooter>
-        </Card>
-      </main>
-    );
-  }
-
 
   return (
     <main className="min-h-screen w-full bg-gradient-to-b from-background to-secondary p-4 sm:p-8">
@@ -320,11 +280,16 @@ export default function CreateQuizPage() {
               <CardDescription>Fill in the details for your poll and add your questions.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="username">Your Name (Presenter)</Label>
                   <Input id="username" {...form.register("username")} disabled />
                    {form.formState.errors.username && <p className="text-sm text-destructive mt-1">{form.formState.errors.username.message}</p>}
+                </div>
+                 <div>
+                  <Label htmlFor="poll_id">Poll ID</Label>
+                  <Input id="poll_id" {...form.register("poll_id")} disabled />
+                   {form.formState.errors.poll_id && <p className="text-sm text-destructive mt-1">{form.formState.errors.poll_id.message}</p>}
                 </div>
               </div>
             </CardContent>
