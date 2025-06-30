@@ -238,11 +238,6 @@ export default function CreateQuizPage() {
         throw new Error(errorData.message || 'Failed to save quiz.');
       }
 
-      toast({
-        title: "Quiz Saved!",
-        description: `Your new quiz (ID: ${generatedPollId}) is ready.`,
-      });
-
       setCreatedPollId(generatedPollId);
     } catch (error) {
       console.error(error);
