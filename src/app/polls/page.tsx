@@ -10,9 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface PollSummary {
   poll_id: string;
-  name: string;
-  question_count: number;
-  difficulty: string;
+  poll_name: string;
 }
 
 export default function PollsPage() {
@@ -29,7 +27,7 @@ export default function PollsPage() {
       }
       
       try {
-        const response = await fetch(`http://localhost:8851/user/api/polls/${user.username}`, {
+        const response = await fetch(`http://localhost:8851/user/api/getUserPolls/${user.username}`, {
             headers: {
                 'Authorization': `Bearer ${user.token}`
             }
@@ -39,17 +37,9 @@ export default function PollsPage() {
           throw new Error("Failed to fetch polls from the server.");
         }
         
-        const data = await response.json();
+        const data: PollSummary[] = await response.json();
         
-        // This transformation logic can be adjusted based on the actual API response
-        const formattedPolls: PollSummary[] = data.map((poll: any) => ({
-            poll_id: poll.poll_id,
-            name: poll.poll_name || poll.poll_id,
-            question_count: poll.question_set.length,
-            difficulty: "Medium" // Placeholder, as this isn't in the backend model
-        }));
-        
-        setPolls(formattedPolls);
+        setPolls(data);
       } catch (error) {
         console.error("Error fetching polls:", error);
         toast({
@@ -102,12 +92,8 @@ export default function PollsPage() {
                   <List className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-headline text-xl font-semibold">{poll.name}</h3>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                    <span>{poll.question_count} Questions</span>
-                    <span>&bull;</span>
-                    <span>Difficulty: {poll.difficulty}</span>
-                  </div>
+                  <h3 className="font-headline text-xl font-semibold">{poll.poll_name}</h3>
+                  <p className="text-sm text-muted-foreground mt-1">ID: {poll.poll_id}</p>
                 </div>
               </div>
               <Button asChild>

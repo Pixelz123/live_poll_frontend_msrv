@@ -81,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (credentials: UserCredentials) => {
     try {
       // NOTE: Replace with your actual backend login endpoint
-      const response = await fetch('http://localhost:8851/user/login', {
+      const response = await fetch('http://localhost:8850/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(credentials),
@@ -103,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (credentials: UserCredentials) => {
     try {
        // NOTE: Replace with your actual backend registration endpoint
-      const response = await fetch('http://localhost:8851/user/register', {
+      const response = await fetch('http://localhost:8850/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(credentials),
