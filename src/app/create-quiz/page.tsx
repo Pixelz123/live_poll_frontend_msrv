@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { PlusCircle, Trash2, ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 
 const pollQuestionSchema = z.object({
   question_content: z.string().min(1, "Question content is required."),
@@ -172,11 +173,12 @@ const QuestionItem = ({
 export default function CreateQuizPage() {
   const { toast } = useToast();
   const router = useRouter();
+  const { user } = useAuth();
   const form = useForm<PollFormValues>({
     resolver: zodResolver(pollSchema),
     defaultValues: {
       poll_id: "",
-      username: "",
+      username: user?.username || "",
       question_set: [
         {
           question_content: "",
@@ -195,9 +197,19 @@ export default function CreateQuizPage() {
   });
 
   const onSubmit = async (data: PollFormValues) => {
+     if (!user || !user.token) {
+        toast({
+            title: "Authentication Error",
+            description: "You must be logged in to create a quiz.",
+            variant: "destructive",
+        });
+        return;
+    }
+
     const payload = {
       ...data,
       status: true,
+      username: user.username,
       question_set: data.question_set.map(q => ({
         ...q,
         question_id: `q_${Math.random().toString(36).substr(2, 9)}`,
@@ -207,11 +219,11 @@ export default function CreateQuizPage() {
     console.log("Quiz JSON Payload:", JSON.stringify(payload, null, 2));
 
     try {
-      // NOTE: Replace '/api/polls' with your actual backend endpoint
-      const response = await fetch('/api/polls', {
+      const response = await fetch('http://localhost:8851/user/api/savePoll', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}`
         },
         body: JSON.stringify(payload),
       });
@@ -236,6 +248,14 @@ export default function CreateQuizPage() {
       });
     }
   };
+  
+  // Set username in form when user logs in
+  React.useEffect(() => {
+    if (user?.username) {
+        form.setValue("username", user.username);
+    }
+  }, [user, form]);
+
 
   return (
     <main className="min-h-screen w-full bg-gradient-to-b from-background to-secondary p-4 sm:p-8">
@@ -264,7 +284,7 @@ export default function CreateQuizPage() {
                 </div>
                 <div>
                   <Label htmlFor="username">Your Name (Presenter)</Label>
-                  <Input id="username" {...form.register("username")} />
+                  <Input id="username" {...form.register("username")} disabled />
                    {form.formState.errors.username && <p className="text-sm text-destructive mt-1">{form.formState.errors.username.message}</p>}
                 </div>
               </div>

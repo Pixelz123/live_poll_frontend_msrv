@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { LogIn } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const loginSchema = z.object({
   username: z.string().min(1, 'Username is required.'),
@@ -20,13 +21,21 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const { toast } = useToast();
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = (data: LoginFormValues) => {
-    // In a real app, you would verify password here
-    login(data.username);
+  const onSubmit = async (data: LoginFormValues) => {
+    try {
+      await login(data);
+    } catch (error) {
+      toast({
+        title: "Login Failed",
+        description: error instanceof Error ? error.message : "An unknown error occurred.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

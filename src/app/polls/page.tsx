@@ -23,22 +23,33 @@ export default function PollsPage() {
 
   useEffect(() => {
     async function fetchPolls() {
-      if (!user) {
+      if (!user || !user.token) {
         setIsLoading(false);
         return;
       }
       
       try {
-        // NOTE: Make sure your backend API is running and accessible at this endpoint.
-        // This assumes the API returns an array of objects matching PollSummary.
-        const response = await fetch(`/api/polls/${user.username}`);
+        const response = await fetch(`http://localhost:8851/user/api/polls/${user.username}`, {
+            headers: {
+                'Authorization': `Bearer ${user.token}`
+            }
+        });
 
         if (!response.ok) {
           throw new Error("Failed to fetch polls from the server.");
         }
         
-        const data: PollSummary[] = await response.json();
-        setPolls(data);
+        const data = await response.json();
+        
+        // This transformation logic can be adjusted based on the actual API response
+        const formattedPolls: PollSummary[] = data.map((poll: any) => ({
+            poll_id: poll.poll_id,
+            name: poll.poll_id, // Or another field if the name is available
+            question_count: poll.question_set.length,
+            difficulty: "Medium" // Placeholder, as this isn't in the backend model
+        }));
+        
+        setPolls(formattedPolls);
       } catch (error) {
         console.error("Error fetching polls:", error);
         toast({

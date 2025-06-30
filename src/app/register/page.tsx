@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { UserPlus } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const registerSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters.'),
@@ -20,12 +21,21 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
   const { register: registerUser } = useAuth();
+  const { toast } = useToast();
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
   });
 
-  const onSubmit = (data: RegisterFormValues) => {
-    registerUser(data.username);
+  const onSubmit = async (data: RegisterFormValues) => {
+    try {
+        await registerUser(data);
+    } catch (error) {
+        toast({
+            title: "Registration Failed",
+            description: error instanceof Error ? error.message : "An unknown error occurred.",
+            variant: "destructive",
+        });
+    }
   };
 
   return (
