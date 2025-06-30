@@ -220,8 +220,6 @@ export default function CreateQuizPage() {
       })),
     };
 
-    console.log("Quiz JSON Payload:", JSON.stringify(payload, null, 2));
-
     try {
       const response = await fetch('http://localhost:8851/user/api/savePoll', {
         method: 'POST',
